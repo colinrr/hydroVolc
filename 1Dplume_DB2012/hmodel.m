@@ -61,7 +61,7 @@ end
 %constants
 g          = 9.81;  % gravitational acceleration (m/s^2)
 C_d        = 998;   % specific heat of air at constant pressure (J/kg/K)
-C_v        = 1952;  %2000 % specific heat of volcanic gas (water) at constant pressure (J/kg/K) 
+C_v        = 1952;  %2000 % specific heat of volcanic gas (water) at constant pressure (J/kg/K) (@~500 K)
 C_l        = 4190;  % specific heat of liquid water (J/kg/K)
 % C_s        = 1250;  %850 % specific heat of solid pyroclasts (J/kg/K)
 R_d        = 287;   % gas constant of dry air (J/kg/K) 

@@ -1,5 +1,6 @@
 function [A,vars,units] = getAtmoArray(atmtable)
-   
+% OUTPUT array: [Press, Alt, Temp Uwind Vwind]
+
     if isstruct(atmtable)
         vars = fieldnames(atmtable);
         units = atmtable.Units;
