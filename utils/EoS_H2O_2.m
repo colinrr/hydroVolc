@@ -26,7 +26,13 @@ for i = 1:length(Pg)
     end
     r = roots(p);
     V = r(imag(r)==0&real(r)>0);
+    % ---- CR quick and dirty edit (but restrictive so hopefully not a problem)
+    rho_t = (1/V)*M*1e6;
+    if length(rho_t)>1 && all(rho_t(2:3)==0); rho(i) = rho_t(1);
+    else
+    % ----
     rho(i) = (1/V)*M*1e6;      % molar volume (cm^3/mol)
+    end
 end
 
 V = (1./rho)*M*1e6; 

@@ -4,14 +4,15 @@
 clear all;  close all
 
 
-dDir = '/Users/crrowell/Kahuna/data/gvolc-meghan/MonteCarloOutput/';
-
+% dDir = '/Users/crrowell/Kahuna/data/gvolc-meghan/MonteCarloOutput/';
 % MCfile = 'KatlaHydro_noLd_v1_2022-04-30_N2000.mat';
 % MCfile = 'KatlaHydro_v1_2022-04-30_N2000.mat';
 % MCfile = 'KatlaHydro_v2_2022-05-17_N2000.mat';
 % MCfile = 'KatlaHydro_v3_2022-06-02_N1000.mat';
-MCfile = 'KatlaHydro_v4_noLd_2022-06-23_N3500.mat';
+% MCfile = 'KatlaHydro_v4_noLd_2022-06-23_N3500.mat';
 
+dDir = '/Users/crrowell/Kahuna/data/tonga/MonteCarloOutput/';
+MCfile = 'TongaHydroRun_v2_2023-05-12_N5000.mat';
 
 % Plots - failure/success critera, summary data, randPars, raw data (indexed)?
 

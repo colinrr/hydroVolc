@@ -33,7 +33,7 @@ switch RiMode
     % Simple formulation, gprime * r / u.^2, typical for source experiments, but not great when the flow is not Boussinesq
     case 'simple' 
         rho_a0_stopgap = 1.12;
-        gprime = g.* (qA.pI.rho_B0 - rho_a0_stopgap)./max(cat(3,qA.pI.rho_B0, rho_a0_stopgap.*ones(size(qA.cI.Q))),[],3);
+        gprime = g.* (rho_a0_stopgap - qA.pI.rho_B0)./max(cat(3,qA.pI.rho_B0, rho_a0_stopgap.*ones(size(qA.cI.Q))),[],3);
         Ri0 = gprime .* qA.pI.r_0 ./ qA.pI.u_0.^2;
   
   % --> GRADIENT AND BV MODES REQUIRE VERTICAL PROFILES TO GET GRADIENTS     

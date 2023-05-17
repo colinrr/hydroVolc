@@ -35,7 +35,7 @@ if ~proxy
     cIf = {'phi_frag','conduit_radius','Zw','pf','Q','vh0','T'};
     cOf = {'pm','Z','a','Cm','rho_magma','U','M','C','cin'}; cOf_ex = {'K','frag','choke','dPdt_fr','u_fr','mu_fr','pm_fr','pg_fr','Zfr','cin_fr','drdt_fr','r_fr'};% K, frag params (dPdt,u,mu,Z,etc), Par flags (frag, choke, Zf)
 else
-    cIf = {'phi_frag','conduit_radius','Zw','pf','Q','vh0','T','n_ec'};
+    cIf = {'phi_frag','conduit_radius','Zw','pf','Q','vh0','T','n_ec','n_0'};
     cOf = {'pm','pg','Z','a','Cm','rho_magma','rho_g','U','M','C','porosity','n','K'}; cOf_ex = {'K','frag','choke','Q','Q0','rho_melt'};% K, frag params (dPdt,u,mu,Z,etc), Par flags (frag, choke, Zf)
 end
 

@@ -1,4 +1,4 @@
-function [N2,yz] = getBruntVaisala(Z,P,T,RH,z,zRef,Nmode)
+function [N2,yz,Cpa,Cpv] = getBruntVaisala(Z,P,T,RH,z,zRef,Nmode)
 % Given atmo profile P(Z), T(Z), RH(Z), calculate squared Brunt Vaisala 
 % frequency at heights z
 % Z -> profile heights (meters)
@@ -28,6 +28,8 @@ function [N2,yz] = getBruntVaisala(Z,P,T,RH,z,zRef,Nmode)
 %             ->  In 'theta' mode, this is potential temperature theta (K)
 %             ->  In 'drho' and 'gas' modes, this is bulk atmospheric
 %                 density, rho_aB (kg/m^3)
+%   Cpa:    Atmo bulk specific heat capacity (const. P)
+%   Cpv:    Atmo bulk specific heat capacity (const. V)
 
 narginchk(4,7)
 assert(isvector(Z))
@@ -107,7 +109,7 @@ end
                 case 'local'
                     Pref = 1000; % hPa
                 case 'fixed'
-                    P = 10^interp1(Z,log10(P),real(zRef),'pchip','extrap');
+                    Pref = 10^interp1(Z,log10(P),real(zRef),'pchip','extrap');
 %                 case 'tp'              
             end
             theta = T.*(Pref./P).^((Cpa-Cva)./Cpa); % Potential Temp.

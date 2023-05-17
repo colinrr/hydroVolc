@@ -1,0 +1,31 @@
+hydroVolc development diary, to-do list, and errata
+
+% MODEL DEVELOPMENT DIRECTIONS:
+ - A version that includes thermal disequilibrium and finite heat transfer rates should be implemented
+ - Some version of microphysics package that incorporates hydrometeor growth and sedimentation along with ash is worth considering.
+   Otherwise water fluxes to upper atmosphere are likely consistently overestimated.
+   		- Include particle aggregation scheme? - Costa/Folch et al? + Telling/Dufek?
+   		- Collective settling and sediment waves parameterizations?
+   		- S02 scavenging (Wadsworth/Ayris diffusivities together)
+ - Conduit water infiltration code (eg. Aravena et al., 2018)
+ - Transient treatment for MFCI - energy release from bomb scaling + MFCI exp. E partitioning?
+- Mass loss and partitioning to multiple spreading levels
+ 	'-> Transitions - first buoyancy transition, tropopause, max height
+ 	- change in local Richardson number and Carazzo 2015 buoyancy ratio vs height - indicator of where partial collapse or spreading is likely?
+ 		'-> could do buoyancy number divided by sedimentation number weighted with volume fraction of particle size bins
+
+% MINOR CHANGES TO MAKE:
+√ - Fix MWIv2 particle size distribution div0 issues 
+		--> (provisional fix applied for fragPar_eff)
+√ - Check MWIv2 through plume particle mass conservation
+√ - Check fragPari vs fragPar_eff usage in MWIv2 - over-fragmentation issue
+ 		--> output fragPar_eff or fragPari?
+√ - Fix Glaze water vapour pressure bug for very high altitude plumes
+  '-> This is now done with a loose approximation. A more exact vapour pressure treatment should be considered for these low pressures.
+ - Build an empirical or rapid-fire calc for fragmentation in proxy conduit runs?
+ - Ld condition - can we do better with gas expansion and reduced entrainment below Ld?
+  - gprime  in MWIv2: consider removing any direct calculation of g' and replacing with more general formulations. 
+		  g' is typically only appropriate to Boussinesq flows, and in many model instances this approximation is not valid.
+ - correct rho_g0 in pI output. 
+ 	- Currently inherited from decompression code, needs to be updated during MWIv2 output. 
+ 	- (not used for any model calcs, but could through a user off if they are trying to make secondary calcs)
