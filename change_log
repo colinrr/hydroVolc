@@ -1,6 +1,6 @@
 hydroVolc development diary, to-do list, and errata
 
-% MODEL DEVELOPMENT DIRECTIONS:
+% MODEL DEVELOPMENT DIRECTIONS (big stuff):
  - A version that includes thermal disequilibrium and finite heat transfer rates should be implemented
  - Some version of microphysics package that incorporates hydrometeor growth and sedimentation along with ash is worth considering.
    Otherwise water fluxes to upper atmosphere are likely consistently overestimated.
@@ -8,6 +8,8 @@ hydroVolc development diary, to-do list, and errata
    		- Collective settling and sediment waves parameterizations?
    		- S02 scavenging (Wadsworth/Ayris diffusivities together)
  - Conduit water infiltration code (eg. Aravena et al., 2018)
+ - Conduit model adjusted for basalts etc, with strain frag criterion
+ 	- Or proxy conduit model with composition+pressure dependent gas release parameterized
  - Transient treatment for MFCI - energy release from bomb scaling + MFCI exp. E partitioning?
 - Mass loss and partitioning to multiple spreading levels
  	'-> Transitions - first buoyancy transition, tropopause, max height
