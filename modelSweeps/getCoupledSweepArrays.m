@@ -35,13 +35,13 @@ if ~proxy
     cIf = {'phi_frag','conduit_radius','Zw','pf','Q','vh0','T'};
     cOf = {'pm','Z','a','Cm','rho_magma','U','M','C','cin'}; cOf_ex = {'K','frag','choke','dPdt_fr','u_fr','mu_fr','pm_fr','pg_fr','Zfr','cin_fr','drdt_fr','r_fr'};% K, frag params (dPdt,u,mu,Z,etc), Par flags (frag, choke, Zf)
 else
-    cIf = {'phi_frag','conduit_radius','Zw','pf','Q','vh0','T','n_ec'};
+    cIf = {'phi_frag','conduit_radius','Zw','pf','Q','vh0','T','n_ec','n_0'};
     cOf = {'pm','pg','Z','a','Cm','rho_magma','rho_g','U','M','C','porosity','n','K'}; cOf_ex = {'K','frag','choke','Q','Q0','rho_melt'};% K, frag params (dPdt,u,mu,Z,etc), Par flags (frag, choke, Zf)
 end
 
 dOf = {'Ld','a','u','rho_d','c','pd','chi'}; dOf_ex = {'SSA','SAv'}; % SSA, SAv
 wOf = {'Lj','failedPlume','m','m_s','m_v','m_l','alpha','xv','z','T'}; wOf_ex = {'T0'};
-pIf = {'n_0','xv_0','r_0','rho_B0','rho_g0','rho_m','T0','T_g','u_0','vh0'}; pIf_ex = {'SSA','SAv','useDecompressLength'}; % SSA, SAv
+pIf = {'n_0','xv_0','r_0','rho_B0','rho_g0','rho_m','T0','T_g','u_0','vh0'}; pIf_ex = {'SSA','SAv','useDecompressLength','rho_a0','Ri0'}; % SSA, SAv
 pOf = {'hm','hb','collapse','rm','m','m_d','m_l','m_v','rho_B','theta','m_0','u','angle'}; pOf_ex = {'m_s','SSA_hm','SSA_hb','SAv_hb','nsi','nsi_tp','m_w_tp','m_s_tp','m_hb','m_l_hb','m_v_hb','m_l_tp','m_v_tp','m_tp','u_hb','rho_hb'}; % SSA_m, SAv_m
 
 %%  QC Calcs
@@ -208,7 +208,9 @@ for ii=1:numel(dat)
             qA.pI.(pIf{ff})(ii) = dat(ii).pI.(pIf{ff})(end);
         end
         qA.pI.SSA(ii)  = sum(dat(ii).pI.nsi.*(3*dat(ii).pI.saScale./(dat(ii).pI.rhoi.*dat(ii).pI.Rgsd)));
-        qA.pI.SAv(ii)  = qA.pI.SSA(ii) .* dat(ii).pO.m_s(1) ./ (dat(ii).pI.u_0 .* pi.* dat(ii).pI.r_0.^2);        
+        qA.pI.SAv(ii)  = qA.pI.SSA(ii) .* dat(ii).pO.m_s(1) ./ (dat(ii).pI.u_0 .* pi.* dat(ii).pI.r_0.^2);  
+        qA.pI.rho_a0(ii) = dat(ii).pO.atmo.rho(1);
+        [~,qA.pI.Ri0(ii)]  = getRichardsonProfile(dat(ii),[],'simple');
     end
     
     % ---------------------- PLUME OUTPUT ------------------------

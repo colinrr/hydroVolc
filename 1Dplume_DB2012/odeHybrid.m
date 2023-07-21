@@ -102,8 +102,8 @@ end
     % set up ODE's
     
     rho_aB    = P/(R_v*theta_a)*(1+w_a)/(w_a+eps);  % Atmospheric gas (air+vapour) bulk density
-    rhophi_av = P/(R_v*theta_a)*w_a/(w_a+eps);      % Atmo vapour volume fraction
-    rhophi_ad = P/(R_v*theta_a)*1/(w_a+eps);        % Atmo dry air volume fraction
+    rhophi_av = P/(R_v*theta_a)*w_a/(w_a+eps);      % Atmo vapour fraction partial density
+    rhophi_ad = P/(R_v*theta_a)*1/(w_a+eps);        % Atmo dry air fraction partial density
     C_aB      = (C_d + w_a*C_v)/(1+w_a);            % Atmo bulk specific heat capacity
     
     % -- For GSD, CR Mar 2021 ---

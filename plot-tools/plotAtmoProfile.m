@@ -1,4 +1,4 @@
-function [ax,p1] = plotAtmoProfile_pap(atmo,axi,col,plotWind)
+function [ax,p1] = plotAtmoProfile_pap(atmo,axi,col,plotWind,extrapAlt)
 
 if ischar(atmo)
     load(atmo)
@@ -14,6 +14,9 @@ end
 if nargin<4
     plotWind = true;
 end
+if nargin<5
+    extrapAlt = [];
+end
 
 if plotWind
     nc = 4;
@@ -21,8 +24,15 @@ else
     nc = 3;
 end
 
+
 if isstruct(atmo)
-    atmo = struct2table(rmfield(atmo,{'lat','lon','time','Units','years'}));
+    sfields = {'lat','lon','time','Units','years'};
+    for fi = 1:length(sfields)
+        if isfield(atmo,sfields{fi})
+            atmo = rmfield(atmo,sfields{fi});
+        end
+    end
+    atmo = struct2table(atmo);
 end
 
 nr = 1;
@@ -44,6 +54,9 @@ else
     if isempty(col)
         col = [0.8500    0.3250    0.0980];
     end
+end
+if extrapAlt
+    extCol = rgba2rgb(col,0.4);
 end
 
 Z = atmo{:,'Altitude'}/1e3;
@@ -73,6 +86,11 @@ for si = 1:(nr*nc)
     
     switch si
         case 1
+            if extrapAlt
+                T_ext = interp1([Z;60;85],[T;273;173],[min(Z):1:85],'pchip','extrap');
+                lext = plot(ax(si),T_ext,min(Z):1:85,'LineWidth',lw,'Color',extCol);
+                hold on
+            end
             p1 = plot(ax(si),T,Z,'LineWidth',lw,'Color',col);
             xl = xlim(ax(si));
             text(ax(si),diff(xl)*0.85+xl(1),htropo+.2,'Tropopause',...
@@ -82,9 +100,20 @@ for si = 1:(nr*nc)
                 ylabel('Height (km a.s.l.)','Interpreter','Latex')
                 xlabel('Temperature (K)','Interpreter','Latex')
             end
-
+            if extrapAlt
+                legend(lext,'Extrapolated')
+            end
+            
         case 2
 %             ax(2) = tightSubplot(nr,nc,2,dx,[],ppads);
+            if extrapAlt
+                P_ext = 10.^interp1(Z,log10(P),min(Z):1:85,'pchip','extrap');
+
+%                 hur_ext = interp1(Z,Meteo_Humidity,real(z),'pchip','extrap');
+                plot(ax(si),P_ext/1e3,min(Z):1:85,'LineWidth',lw,'Color',extCol);
+                hold on
+            end
+
             plot(ax(si),P/1e3,Z,'LineWidth',lw,'Color',col)
             if plotnew
                 xlabel('Pressure (kPa)','Interpreter','Latex')
@@ -96,6 +125,11 @@ for si = 1:(nr*nc)
     % xlabel('Wind (m/s)')
         case 3
 %             ax(3) = tightSubplot(nr,nc,3,dx,[],ppads);
+            if extrapAlt
+                RH_ext = interp1(Z,RH,min(Z):1:85,'pchip','extrap');
+                plot(ax(si),RH_ext,min(Z):1:85,'LineWidth',lw,'Color',extCol);
+                hold on
+            end
             plot(ax(si),RH,Z,'LineWidth',lw,'Color',col)
             if plotnew
                 xlabel('Rel. Humidity (\%)','Interpreter','Latex')
@@ -116,15 +150,28 @@ for si = 1:(nr*nc)
                 wabs = atmo{:,'windAbs'};
                 wl = [wl {'Abs.'}];
             end
+            if extrapAlt
+                W_all = [uv wabs];
+                W_ext = zeros(length(min(Z):1:85),size(W_all,2));
+                for wi=1:size(W_ext,2)
+                    W_ext(:,wi) = interp1(Z,W_all(:,wi),min(Z):1:85,'pchip',W_all(end,wi));
+                end
+%                 RH_ext = interp1(Z,RH,min(Z):1:85,'pchip','extrap');
+                plot(ax(si),W_ext,min(Z):1:85,'LineWidth',lw,'Color',extCol);
+                hold on
+            end  
+            lp = [];
             if ~isempty(uv)
-                plot(uv,Z,'LineWidth',2)
+                uvp = plot(uv,Z,'LineWidth',2);
+                lp = [lp; uvp];
             end
                 
-            
+          
             hold on
-            plot(wabs,Z,'--k','LineWidth',2)
+            wp = plot(wabs,Z,'--k','LineWidth',2);
+            lp = [lp; wp];
             xlabel('Wind (m/s)')
-            legend([wl 'Tropopause'])
+            legend(lp,[wl 'Tropopause'])
             
     % ax(5) = tightSubplot(nr,nc,5,dx,[],ppads);
 

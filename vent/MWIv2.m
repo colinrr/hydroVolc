@@ -190,7 +190,7 @@ function [pI2,wO] = MWIv2(cI,cO,pI)
     pI2.r_0     = ((wO.m_s(end) + m_w(end))./(pi*wO.rho_B(end)*wO.u(end))).^(1/2); % PROBLEM WITH PLUME RADIAL EXPANSION THAT IS FAR TOO RAPID HERE
     pI2.xv_0    = wO.xv(end);
     pI2.nsi     = wO.nsi(end,:)';
-    
+%     pI2.rho_g0  = 
     % m_w(end) + dm_ws;
     
     % Run enthalpy calcs for m_v, m_l?
@@ -422,7 +422,7 @@ end
     dn_s_frag = dE_ss/wO.Ess_out; % Total solids mass fraction fragmented at this step
 
     %% Deltas
-    gprime = (rho_B - rho_wa)./max([rho_B P.rho_l]) * P.g; % Reduced grav for bouyancy
+    gprime = (rho_B - rho_wa)./max([rho_B P.rho_l]) * P.g; % Reduced grav for bouyancy force and potential E
     
     dnsi_dz = dn_s_frag * (-nsi_in + wO.phi_pdf);            % PSD change
     dm_w_frag = m_s*dn_s_frag*(sum((pI.ni).*(nsi)./(1-pI.ni)) - sum((pI.ni).*(nsi+dnsi_dz)./(1-pI.ni))); % Gas release from fragmentation
