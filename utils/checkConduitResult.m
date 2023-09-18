@@ -12,17 +12,17 @@ function [Zpass,UPpass,Mpass,Ppass,Fcheck,valid] = checkConduitResult(cO,Zthresh
 %                   Default = 0.1;
 %
 % PASS CONDITIONS ((ALWAYS REQ'D):
-%   Zpass  1) upper-most z value is less than Zthresh
+%   Zpass  1) TRUE if upper-most z value is less than Zthresh
 %                       ie Conduit run reaches surface. Typical Zthresh is 
 %                       within a conduit diameter or so
 %
-%   UPpass  2) (P_v + rho*u^2/2)/P > (1- Pthresh) : Conduit is not
+%   UPpass  2) TRUE if (P_v + rho*u^2/2)/P > (1- Pthresh) : Conduit is not
 %               underpressured (ie likely to collapse).
 %
 %  AND EITHER OF
-% Mpass    3) Mach # < Mthresh with P_v/P_a > (1-Pthresh) :
+% Mpass    3) TRUE if Mach # < Mthresh with P_v/P_a > (1-Pthresh) :
 %               Conduit is choked and either pressure balanced or overpressured
-% Ppass    4) Mach # < Mthresh, |dP/P| < (1-Pthresh)
+% Ppass    4) TRUE if Mach # < Mthresh, |dP/P| < (1-Pthresh)
 %               Conduit is not choked but is pressure balanced
 %
 % Additional diagnostic:

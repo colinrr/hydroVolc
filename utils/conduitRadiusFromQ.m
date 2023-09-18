@@ -1,5 +1,5 @@
 function [Rlims,cIo,cOo,success] = conduitRadiusFromQ(C,Rbounds,varargin)
-% val = conduitRadiusFromQ(C,lookupT,varargin)
+% [Rlims,cIo,cOo,success] = conduitRadiusFromQ(C,Rbounds,varargin)
 % Given Q and surface pressure condition (or general cI struct?), run 
 % shooting search to get appropriate radius (range) for
 % conduit model (using Hajimirza conduit model, V6).
@@ -92,10 +92,10 @@ maxIter = 10;      % Max iterations to narrow search
             cO = Conduit_flow_with_nucleation_V6(C);
             
             
-            [Zcheck,UPcheck,Mcheck,Pcheck,flareCheck,valid] = checkConduitResult(cO,p.Zfailthresh,p.Mfailthresh,p.Pfailthresh);
+            [Zcheck,UPcheck,Mcheck,Pcheck,flareCheck,valid] = checkConduitResult(cO,par.Zfailthresh,par.Mfailthresh,par.Pfailthresh);
                         
             if par.verbose
-                fprintf('  --> I: %i, R: %.5f, dR: %.5f, Zc: %i, UPc: %i, Pc: %i, Mc: %i, Fc: %i, V: %i\n',...
+                fprintf('  --> I: %i, R= %.5f, dR= %.5f. Surf.? %i, UnderP.? %i, P bal.? %i, Mach#? %i, Flare? %i, Valid? %i\n',...
                     iter,C.conduit_radius,dR,Zcheck,UPcheck,Pcheck,Mcheck,flareCheck,valid)
             end
             
