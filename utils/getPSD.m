@@ -72,7 +72,20 @@ end
     % Particle density as a function of radius
 %     rho_s = (1-porosity)*rho_m + (porosity)*Pg/(Rv*T);
 %     rho_s = (1-porosity)*rho_m + (porosity)*EoS_H2O_2(Pg,T);
-    if X<1
+    % !!!! NOTE: assuming water is the fluid in pores, any initial temperature less
+    % than 100 C would make the pores liquid filled and potentially lead to
+    % unreasonably high water mass fractions contained in pores. We can
+    % avoid this by assuming air or water and and a simple ideal gas calc.
+    % This does not make a major difference in particle density for the
+    % gas-filled case, but could lead to some weird issues either in
+    % conservation of mass or thermodynamically later on. Watch for effects
+    % in e.g. con2plume function with PSD initialization, and in
+    % fragmentation scheme of MWIv2. The saturation temperature below is a
+    % quick fix that needs proper treatment for this edge case - CR 23-09-09 !!!
+    if T<saturationTemperature(Pg,373)
+        rho_w = densityTX(T,X);
+        warning('T is less than saturation temperature, bubble gas mass/density may be inconsistent.')
+    elseif X<1
         rho_w = densityTX(T,X);
     else
         rho_w = density(Pg,T);

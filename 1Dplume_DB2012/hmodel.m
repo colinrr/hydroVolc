@@ -1,10 +1,13 @@
-function Pout = hmodel(pI,verbose)
-% pOut = hmodel(pS)
+function varargout = hmodel(pI,verbose)
+% pOut = hmodel(pI), [pOut,pIn] = hmodel(pS)]
 % ---->
 % pS = struct output of getPlumeSource
 % verbose = true/false. true = output full z profiles. Otherwise just 5
 %           basic output params
 % pOut = output struct
+% pIn  = optionally re-output pI (some calculated parameters will be
+%          included)
+%
 % --> I/O changes, CR Mar 2021
 % --> GSD implementation based on Girault ea 2014, Colucci ea 2014, CR Mar 2021
 
@@ -255,6 +258,13 @@ Pout.hb = hb;               % neutral bouyancy height [m]
 Pout.collapse = collapse;   % column collapse flag
 Pout.m_0 = m_0;             % source mass eruption rate [kg/s]
 
+if isempty(pI.rho_B0)
+    pI.rho_B0 = rho_B0;
+end
+if isempty(pI.rho_g0)
+    pI.rho_g0 = rho_v0;
+end
+
 if verbose
     ztropo = findTPheight(Meteo_Height/1e3,Meteo_Temperature);
 
@@ -297,6 +307,11 @@ if verbose
 %     Pout.w_s    = w_s;
     Pout.z      = z;
 %     Pout.drho
+end
+
+varargout{1} = Pout;
+if nargout==2
+    varargout{2} = pI;
 end
 % -----------------------------------
     end

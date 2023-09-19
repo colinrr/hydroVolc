@@ -46,7 +46,7 @@ function [axP,lp] = plotPlumePairMS(D,cols)
     end
     set(axP,'Ylim',[0 hm/1e3])
     lp = [p1 p2];
-    
+    linkaxes(axP,'y')
 end
 
 

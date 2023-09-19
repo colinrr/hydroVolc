@@ -25,10 +25,10 @@ phi0        = 0.75; % Large pyroclast porosity
 D           = 3.0;  % GSD Power law exponent
 phiSz_min   = -9;   % GSD min phi size (max r)
 phiSz_max   = 10;   % GSD max phi size (min r)
-Pg          = 1e6;   % Bubble gas pressure. Should really inherit from conduit, or perhaps assume atmospheric
+Pg          = 1e5;   % Bubble gas pressure. Should really inherit from conduit, or perhaps assume atmospheric
 
 % The next 5 params define the GSD and will be generated from the above 5
-% by default. See getGSD for more info.
+% by default. See getPSD for more info.
 nsi         = [];   % particle mass fraction at each grain size (including bubble gas). Sum(mi) = 1.
 ni          = [];   % mass fraction of bubbles at each grain size, relative to particle mass fraction.
 Rgsd        = [];   % particle radii (m)
@@ -149,7 +149,7 @@ k_w     = 0.6; % Water thermal conductivity
     addParameter(p,'phiFrag_sig',phiFrag_sig)
     addParameter(p,'phiFrag_cutoff',phiFrag_cutoff)
     
-    % Other
+    % Other (calculated separately)
     addParameter(p,'rho_g0',[])
     addParameter(p,'rho_B0',[])
     addParameter(p,'Ld',[])
