@@ -1,16 +1,22 @@
-function [axC,lp] = plotConduitPairMS(d1,d2,cols)
+function [axC,lh] = plotConduitOutput(D,cols)
 % plotCouplePlume(D)
 % plots the detailed output of a pair of conduit runs
-% d1 = struct: d1.conduitI = output of getConduitSource
-%              d1.conduitO = output of Conduit_flow_with_nucleation
+% d1 = struct containing conduit model input/output (may be struct vector):
+%        D.cI = output of getConduitSource
+%        D.cO = output of Conduit_flow_with_nucleation
+
 % Same for d2
 % cols = 2x3 color vector for the 2 plots
 %
 % CRowell Aug 2021
 
-    if nargin<3
-        cols = get(0,'DefaultAxesColorOrder');
-        cols = cols([2 1],:);
+    if nargin<2
+        if length(D)<=6
+            cols = get(0,'DefaultAxesColorOrder');
+            cols = cols([1:2 4:end],:);
+        else
+            cols = viridis(length(D));
+        end 
     end
     
     nrows = 1;
@@ -33,15 +39,34 @@ function [axC,lp] = plotConduitPairMS(d1,d2,cols)
     %   Volume (mass?) fractions of particles, gas, liquid
     %   ...PSD?
     %   ...SO2?
-%     [~,pi] = max([d1.plumeO.hm d2.plumeO.hm]);
-%     if pi==2
-%         d = d1; d1 = d2; d2 = d;
-%     end
+
+    zm = zeros(length(D),1);
+    for ii=1:length(D)
+        zm(ii) = D(ii).cI.Z0;
+    end
+    [zm,~] = max(zm);
+
+    
+    if all(isfield(D,{'cI','cO'}))
+        
+        
+        if length(D)>1
+            [axC,lh(length(D))] = Conduit_flow_plot(D(end).cI,D(end).cO,cols(end,:));
+            for ii=length(D):-1:1
+                lh(ii) = Conduit_plot_2(D(ii).cI,D(ii).cO,axC,cols(ii,:));
+                
+            end
+        else
+            [axC,lh] = Conduit_flow_plot(D.cI,D.cO,cols(1,:));
+        end
+    end
+    
+    ylim(axC,[0 zm/1e3])
     
 %     if all(isfield(d1,{'conduitI','conduitO'}))
-        [axC,p1] = Conduit_flow_plot(d1.cI,d1.cO,cols(1,:));
-        p2 = Conduit_plot_2(d2.cI,d2.cO,axC,cols(2,:));
-        lp = [p1 p2];
+%         [axC,lh] = Conduit_flow_plot(d1.cI,d1.cO,cols(1,:));
+%         p2 = Conduit_plot_2(d2.cI,d2.cO,axC,cols(2,:));
+%         lh = [lh p2];
 end
 
 function [ax,p1] = Conduit_flow_plot(cI,cO,color)

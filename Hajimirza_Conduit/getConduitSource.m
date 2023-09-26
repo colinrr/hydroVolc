@@ -20,6 +20,19 @@ phi0            = 0;            % Volume fraction of initial exsolved volatiles
 
 conduit_radius  = 45;           % Conduit radius
 
+composition     = struct();     % Struct containing optional name value pairs of chemical 
+                                % WEIGHT FRACTIONS for Hui & Zhang 2007 viscosity model
+                                % '-> see getComposition for default values
+                                % field options:
+                                %   'SiO2','TiO2','Al2O3','FeO','MnO','MgO','CaO','Na2O','K2O'
+                                %
+                                % NOTE! This provides some flexibility in composition, 
+                                % but the water solubility model is still
+                                % based on high-silica rhyolite, so use
+                                % great caution (or get new
+                                % solubility/diffusivity models) for SiO2
+                                % much less than about 72-75 wt%
+                                    
 % Stuff exported from inside the condiut model
 rho_melt    = 2400;       % Melt density [Kg/m^3]
 % pf          = 1e5;        % Surface pressure - defaults to pressure from
@@ -64,6 +77,7 @@ Pfailthresh = .05;  % Over-/underpressure threshold
     addParameter(p,'phi_frag',phi_frag)
     addParameter(p,'N0',N0)
     addParameter(p,'phi0',phi0)
+    addParameter(p,'composition',composition)
     
     % Stuff ported out of original conduit script to allow input. Must be
     % added to Par struct internally
@@ -84,6 +98,9 @@ Pfailthresh = .05;  % Over-/underpressure threshold
     parse(p,varargin{:})
     conSource = p.Results;
     clear atmo;
+    
+    % Populate chemical composition
+    conSource.composition = getComposition(conSource.composition);
     
     % Atmospheric profile
     if(ischar(conSource.atmo))

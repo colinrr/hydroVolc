@@ -92,21 +92,23 @@ maxIter = 10;      % Max iterations to narrow search
             cO = Conduit_flow_with_nucleation_V6(C);
             
             
-            [Zcheck,UPcheck,Mcheck,Pcheck,flareCheck,valid] = checkConduitResult(cO,par.Zfailthresh,par.Mfailthresh,par.Pfailthresh);
+            [Z0check,UPcheck,CHcheck,PBALcheck,fragCheck,flareCheck,valid,repString] = checkConduitResult(cO,par.Zfailthresh,par.Mfailthresh,par.Pfailthresh);
                         
             if par.verbose
-                fprintf('  --> I: %i, R= %.5f, dR= %.5f. Surf.? %i, UnderP.? %i, P bal.? %i, Mach#? %i, Flare? %i, Valid? %i\n',...
-                    iter,C.conduit_radius,dR,Zcheck,UPcheck,Pcheck,Mcheck,flareCheck,valid)
+                fprintf('  --> I: %i, dR= %.5f, %s\n',...
+                    iter,dR,repString)
+%                 fprintf('  --> I: %i, R= %.5f, dR= %.5f. Surf.? %i, UnderP.? %i, P bal.? %i, Mach#? %i, Flare? %i, Valid? %i\n',...
+%                     iter,C.conduit_radius,dR,Z0check,UPcheck,PBALcheck,CHcheck,flareCheck,valid)
             end
             
             % Too high
-            if (and(~Mcheck,Zcheck) && ~flareCheck)  % Z success, U fail, no flare
+            if (and(~CHcheck,Z0check) && ~flareCheck)  % Z success, U fail, no flare
                 Rhi = C.conduit_radius;
                 dR  = dR/2;
             % Too low
-            elseif and(Mcheck,~Zcheck) ||... % U success, Z fail
-                    and(and(~Mcheck,Zcheck), flareCheck) ||... % flare+Ufail+Zpass
-                    (~Mcheck && ~Zcheck && Pcheck) || ...% Z fail, U fail, P pass (non-unique but should be too low in most useful cases)
+            elseif and(CHcheck,~Z0check) ||... % U success, Z fail
+                    and(and(~CHcheck,Z0check), flareCheck) ||... % flare+Ufail+Zpass
+                    (~CHcheck && ~Z0check && PBALcheck) || ...% Z fail, U fail, P pass (non-unique but should be too low in most useful cases)
                     and(~valid,~cO.Par.frag) % no Frag
                 Rlo = C.conduit_radius;
                 dR  = dR/2;
@@ -164,11 +166,13 @@ maxIter = 10;      % Max iterations to narrow search
 
                 % Allow underpressure such that Pd + rho*v^2/2 ~ Pf
                 
-                [Zcheck,UPcheck,Mcheck,Pcheck,flareCheck,valid] = checkConduitResult(cO,p.Zfailthresh,p.Mfailthresh,p.Pfailthresh);
+                [Z0check,UPcheck,CHcheck,PBALcheck,fragCheck,flareCheck,valid,repString] = checkConduitResult(cO,par.Zfailthresh,par.Mfailthresh,par.Pfailthresh);
 
                 if par.verbose
-                    fprintf('  --> I: %i, R: %.5f, dR: %.5f, Zc: %i, UPc: %i, Pc: %i, Mc: %i, Fc: %i, V: %i\n',...
-                        iter,C.conduit_radius,searchDir*dR,Zcheck,UPcheck,Pcheck,Mcheck,flareCheck,valid)
+                    fprintf('  --> I: %i, dR= %.5f, %s\n',...
+                        iter,dR,repString)
+%                     fprintf('  --> I: %i, R: %.5f, dR: %.5f, Zc: %i, UPc: %i, Pc: %i, Mc: %i, Fc: %i, V: %i\n',...
+%                         iter,C.conduit_radius,searchDir*dR,Z0check,UPcheck,PBALcheck,CHcheck,flareCheck,valid)
                 end
                 if valid 	 % Reduce step size and continue
                     dR = dR/2;

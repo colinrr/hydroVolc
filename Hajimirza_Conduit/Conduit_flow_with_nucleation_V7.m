@@ -1,6 +1,6 @@
 
 
-function [output] = Bubble_Nucleation_Growth_tData_V6(Input)
+function [output] = Conduit_flow_with_nucleation_V7(Input)
 % By Sahand Hajimirza
 % Last update: Apr 22, 2021
 
@@ -29,6 +29,11 @@ function [output] = Bubble_Nucleation_Growth_tData_V6(Input)
 
 global fw_interpolant psat_interpolant 
 
+% Check for proper input structure
+assert(all(isfield(Input, {'atmo','composition','conduit_radius','dP','f0',...
+    'Mfailthresh','N0','pf','Pfailthresh','phi0','phi_frag','proxy','Q',...
+    'rho_melt','ST_coeff','T','theta','vh0','Z0','ZfailScale','Zw'})),...
+    'Conduit model input is missing fields - check getConduitSource')
 
 %==========================================================================
 % Physical properties and constants
@@ -64,7 +69,7 @@ Par.T           = Input.T; % + 273.15;                         % Temperature (CR
 Par.Xc          = 0;                                        % Mole fraction of CO2
 Par.Q           = Input.Q;                                  % Mass discharge rate
 Par.C0          = solubility(Par.Pinitial,Par.Xc,Par.T);    % Initial water concentration
-Par.mu          = viscosity(Par.T,Par.C0);
+Par.mu          = viscosity(Input.composition,Par.T,Par.C0);
 Par.ST_coeff    = Input.ST_coeff;                           % Heterogeneous nucleation factor
 Par.phi_frag    = Input.phi_frag;
 Par.P_frag      = 1e5;
@@ -289,7 +294,7 @@ global fw_interpolant
     %=============================================
     
     
-    out.mu = viscosity(Par.T,Par.C0) * ones(size(t));       % Viscosity
+    out.mu = viscosity(Par.composition,Par.T,Par.C0) * ones(size(t));       % Viscosity
     out.rho_magma = Par.rho_melt * ones(size(t));           % Density
 
     
@@ -401,7 +406,7 @@ out.rho_g = rho;
 out.cin = solubility(out.pg,Par.Xc,Par.T);
 out.D_cin = DH2Orhyolite(out.cin,out.pg,Par.T);
 
-mu = viscosity(Par.T,out.cin);
+mu = viscosity(Par.composition,Par.T,out.cin);
 drdt = (r./(4*mu)) .* (out.pg-out.pm-2*out.sigma./r);
 out.drdt = (drdt .* out.M0 + out.J .* out.rc)./out.M0;
 
@@ -419,7 +424,7 @@ out.dPsat = dPsat;
 
 %======================================================================
 % Magma decompression
-out.mu = viscosity(Par.T,out.Cm);
+out.mu = viscosity(Par.composition,Par.T,out.Cm);
 
 out.porosity = out.M3 ./ (out.M3 + 3/(4*pi));
 out.rho_magma = out.porosity .* out.rho_g +...
@@ -547,7 +552,7 @@ dPsat = Psat_rate(out.psat,Par.T,(out.dC_diff + out.dC_nuc),Par);
 out.dPsat = dPsat;
 
 %======================================================================
-out.mu = viscosity(Par.T,out.Cm);
+out.mu = viscosity(Par.composition,Par.T,out.Cm);
 
 porosity_in = (vg_in) ./ (1+vg_in+vg_out);
 porosity_out = (vg_out) ./ (1+vg_in+vg_out);
@@ -688,7 +693,7 @@ dPsat = Psat_rate(out.psat,Par.T,(out.dC_diff + out.dC_nuc),Par);
 out.dPsat = dPsat;
 
 %======================================================================
-out.mu = viscosity(Par.T,out.Cm);
+out.mu = viscosity(Par.composition,Par.T,out.Cm);
 
 porosity_in = (vg_in) ./ (1+vg_in+vg_out);
 porosity_out = (vg_out) ./ (1+vg_in+vg_out);
@@ -842,46 +847,46 @@ end
 end
 
 
-function eta = viscosity(T,H2O)
+function eta = viscosity(composition,T,H2O)
 
 % Viscosity, Hui & Zhang 2007
 
-SiO2 = 76.53e-2;
-TiO2 = .06e-2;
-Al2O3 = 13.01e-2;
-FeO = .79e-2;
-MnO = .08e-2;
-MgO = .02e-2;
-CaO = .74e-2;
-Na2O = 3.87e-2;
-K2O = 4.91e-2;
+% SiO2 = 76.53e-2;
+% TiO2 = .06e-2;
+% Al2O3 = 13.01e-2;
+% FeO = .79e-2;
+% MnO = .08e-2;
+% MgO = .02e-2;
+% CaO = .74e-2;
+% Na2O = 3.87e-2;
+% K2O = 4.91e-2;
 
+mO      = 15.9994;
+mSiO2   = 28.0855 + 2*mO;
+mTiO2   = 47.88 + 2*mO;
+mAl2O3  = 2*26.98154 + 3*mO;
+mFeO    = 55.847 + mO;
+mFe2O3  = 2*55.847 + 3*mO; 
+mMnO    = 54.9380 + mO;
+mMgO    = 24.305 + mO;
+mCaO    = 40.08 + mO;
+mNa2O   = 2*22.98977 + mO;
+mK2O    = 2*39.0983 + mO;
+mH2O    = 2*1.00794 + mO;
 
-
-mO = 15.9994;
-mSiO2 = 28.0855 + 2*mO;
-mTiO2 = 47.88 + 2*mO;
-mAl2O3 = 2*26.98154 + 3*mO;
-mFeO = 55.847 + mO;
-mMnO = 54.9380 + mO;
-mMgO = 24.305 + mO;
-mCaO = 40.08 + mO;
-mNa2O = 2*22.98977 + mO;
-mK2O = 2*39.0983 + mO;
-mH2O = 2*1.00794 + mO;
-
-nSiO2 = SiO2 / mSiO2;
-    nTiO2 = TiO2 / mTiO2;
-    nAl2O3 = Al2O3 / mAl2O3;
-    nFeO = FeO / mFeO;
-    nMnO = MnO / mMnO;
-    nMgO = MgO / mMgO;
-    nCaO = CaO / mCaO;
-    nNa2O = Na2O / mNa2O;
-    nK2O = K2O / mK2O;
+nSiO2 = composition.SiO2 / mSiO2;
+    nTiO2 = composition.TiO2 / mTiO2;
+    nAl2O3 = composition.Al2O3 / mAl2O3;
+    nFeO = composition.FeO / mFeO;
+    nFe2O3 = composition.Fe2O3 / mFe2O3; % Added by CR, Sep 2023
+    nMnO = composition.MnO / mMnO;
+    nMgO = composition.MgO / mMgO;
+    nCaO = composition.CaO / mCaO;
+    nNa2O = composition.Na2O / mNa2O;
+    nK2O = composition.K2O / mK2O;
 %    nP2O5 = P2O5 / mP2O5;
     nH2O = H2O / mH2O;
-    nFeMnO = nFeO + nMnO;
+    nFeMnO = nFeO + nMnO + nFe2O3; % Fe2O3 included by CR, Sep 2023, assuming HZ(2007) FeO_tot wt.% is equivalent to converted molar mass...
     
     nNaK = 2*nNa2O + 2*nK2O;
     nAl = 2*nAl2O3;
