@@ -89,6 +89,9 @@ maxIter = 10;      % Max iterations to narrow search
         while and(dR>dRmin,~valid) && iter<=par.maxIter*2
             iter=iter+1;
             C.conduit_radius = mean([Rlo Rhi]);
+            % !!! Should add specified tolerance thresholds to C HERE
+            % ...
+            
             cO = Conduit_flow_with_nucleation_V6(C);
             
             

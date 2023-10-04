@@ -174,7 +174,8 @@ options=odeset('AbsTol',[1e-38,1e-3,1e-12,1e-20,1e-28,1e-4,1e-5],...
 %==========================================================================
 % After fragmentation (Gas with dispersed pyroclasts)
 %==========================================================================
-if par2.Z(end) > 100 && par2.pm(end)/1e6 > .5
+% if par2.Z(end) > 100 && par2.pm(end)/1e6 > .5
+if par2.Z(end) > 1 && par2.pm(end)/1e6 > .2 % Test alt condition for proceeding to fragmentation
    
     y0 = [par2.mg(end),par2.M0(end),par2.M1(end),par2.M2(end),par2.M3(end),...
         par2.pm(end),par2.Z(end),par2.pg(end), par2.a(end)];

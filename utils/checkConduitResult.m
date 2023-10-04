@@ -41,11 +41,15 @@ FragCheck   = logical(cO.Par.frag);
 Zpass   = cO.Z(end) < Zthresh;                                                     % Reaches surface
 UnderPressurePass  = ( (cO.pm(end)+cO.U(end).^2*cO.rho_magma(end)/2)/cO.Par.pf ) > (1-Pthresh); % Not underpressured
 PressBalancePass   = and( (cO.pm(end)/cO.Par.pf) < (1+Pthresh), UnderPressurePass );              % Pressure balanced
-ChokePass   = and( cO.M(end)>Mthresh,cO.M(end)<1.1 );                           % Choked
+ChokePass   = and( cO.M(end)>Mthresh,cO.M(end)<1.1 );                           % Choked - upper limit a bit arbitrary here as it isn't really used
 
 % Fcheck  = cO.a(end) > cO.a(1);
 FlareCheck  = abs((cO.a(end) - cO.a(1))./cO.a(1)) > .005;
 
+% Non - fragmented case corresponds to and(Zpass,UnderPressurePass) && PressBalancePass
+%   --> unless we allow flow to not reach surface...
+
+% Fragmented case
 valid   = and(Zpass,UnderPressurePass) && or(PressBalancePass,ChokePass);
 
 report = sprintf('R= %.5f, Z ~ 0? %i, Frag? %i, UnderP.? %i, P bal.? %i, Mach#? %i, Flare? %i, Valid? %i\n',...
