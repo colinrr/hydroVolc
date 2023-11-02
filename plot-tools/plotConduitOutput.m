@@ -1,4 +1,4 @@
-function [axC,lh] = plotConduitOutput(D,cols)
+function varargout = plotConduitOutput(D,cols)
 % plotCouplePlume(D)
 % plots the detailed output of a pair of conduit runs
 % d1 = struct containing conduit model input/output (may be struct vector):
@@ -62,11 +62,16 @@ function [axC,lh] = plotConduitOutput(D,cols)
     end
     
     ylim(axC,[0 zm/1e3])
+    linkaxes(axC,'y')
     
-%     if all(isfield(d1,{'conduitI','conduitO'}))
-%         [axC,lh] = Conduit_flow_plot(d1.cI,d1.cO,cols(1,:));
-%         p2 = Conduit_plot_2(d2.cI,d2.cO,axC,cols(2,:));
-%         lh = [lh p2];
+    if nargout>=1
+        varargout{1} = axC;
+    end
+    if nargout==2
+        varargout{2} = lh;
+    end
+    
+
 end
 
 function [ax,p1] = Conduit_flow_plot(cI,cO,color)

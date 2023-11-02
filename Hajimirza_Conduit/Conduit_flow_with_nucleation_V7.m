@@ -1,8 +1,8 @@
 
 
 function [output] = Conduit_flow_with_nucleation_V7(Input)
-% By Sahand Hajimirza
-% Last update: Apr 22, 2021
+% By Sahand Hajimirza, modified since V6 by Colin Rowell
+% Last update: Oct 17, 2023
 
 % This code calculates bubble nucleation and growth during magma ascent in
 % a cylindrical conduit with a constant cross sectional area. 
@@ -10,9 +10,16 @@ function [output] = Conduit_flow_with_nucleation_V7(Input)
 % Hajimirza et al "The shape of volcanic conduits inferred from bubble size
 % distributions" EarthArxiv 2020
 
-% Updates to V6 introduced by Colin Rowell
+% V7 updates by Colin Rowell
+% To-do: align mFailTol and critical Mach # Mc?
+% --> Implemented ConduitOutcome class to interpret results and aid iteration
+% --> Changed input failure thresholds to tolerances, adjusted
+% fragmentation condition tolerances
+% --> Included rho_rock in Par function
 % --> Included optional composition input to tweak viscosity model
 % --> Included workaround/fix for cases with initial non-zero bubble number density, Sep 2023
+
+% Updates to V6 introduced by Colin Rowell
 % --> Minor (mostly I/O) modifications to incorporate getConduitSource function, Apr/May 2021
 % --> V2/V6 versioning uncertain here?
 
@@ -25,14 +32,14 @@ function [output] = Conduit_flow_with_nucleation_V7(Input)
 % account for isothermal flow.
 
 % Sound velocity after fragmentation has been changed from in pure gas to in
-% the mixture (psudo-gas). 
+% the mixture (pseudo-gas). 
 
 global fw_interpolant psat_interpolant 
 
 % Check for proper input structure
 assert(all(isfield(Input, {'atmo','composition','conduit_radius','dP','f0',...
-    'Mfailthresh','N0','pf','Pfailthresh','phi0','phi_frag','proxy','Q',...
-    'rho_melt','ST_coeff','T','theta','vh0','Z0','ZfailScale','Zw'})),...
+    'mFailTol','N0','pf','pFailTol','phi0','phi_frag','proxy','Q',...
+    'rho_melt','ST_coeff','T','theta','vh0','Z0','zFailTol','Zw'})),...
     'Conduit model input is missing fields - check getConduitSource')
 
 %==========================================================================
@@ -44,7 +51,7 @@ Par.AV          = 6.022e23;                     % Avogadro number [1/mol]
 Par.Rgas        = 8.314;                        % Gas constant [J/(K.mol)]
 % Par.rho_melt    = 2400;                         % Melt density [Kg/m^3]
 Par.g           = 9.81;                         % Gravity
-rho_rock        = 2400;                         % Rock density
+Par.rho_rock        = 2400;                         % Rock density
 % Par.f0          = .0025;                        % Friction coefficient (Mastin 2000)
 Par.K_melt      = 224e8;                        % Bulk Modulus of melt
 
@@ -64,7 +71,7 @@ Zc           = NaN;
 Par.Z0          = Input.Z0;                                 % Initial depth
 % Par.Pinitial    = rho_rock * Par.g * Par.Z0 + Input.dP;     % Initial pressure = Lithostatic + overpressure
 % Par.pf          = 1e5;                                      % Final pressure = atmpspheric pressure
-Par.Pinitial    = Par.pf + rho_rock * Par.g * Par.Z0 + Input.dP; % Initial pressure = Lithostatic + overpressure
+Par.Pinitial    = Par.pf + Par.rho_rock * Par.g * Par.Z0 + Input.dP; % Initial pressure = Outlet + Lithostatic + overpressure
 Par.T           = Input.T; % + 273.15;                         % Temperature (CR: switched to K)
 Par.Xc          = 0;                                        % Mole fraction of CO2
 Par.Q           = Input.Q;                                  % Mass discharge rate
@@ -76,7 +83,12 @@ Par.P_frag      = 1e5;
 Par.a           = Input.conduit_radius;                     % Conduit radius
 Par.composition = Input.composition;
          
-Par.Mc = .97;   %  Critical Mach number
+Par.Mc = .97;   %  Critical Mach number to initiate flaring
+
+% Tolerances
+% outcome.zFailTol = Input.zFailTol;
+% outcome.pFailTol = Input.pFailTol;
+% outcome.mFailTol = Input.mFailTol;
 
 % Interpolation for fugacity coefficient as a function of pressure at 850C.
 % It can be written as a function of pressure and temperature if calculation at other
@@ -174,8 +186,8 @@ options=odeset('AbsTol',[1e-38,1e-3,1e-12,1e-20,1e-28,1e-4,1e-5],...
 %==========================================================================
 % After fragmentation (Gas with dispersed pyroclasts)
 %==========================================================================
-% if par2.Z(end) > 100 && par2.pm(end)/1e6 > .5
-if par2.Z(end) > 1 && par2.pm(end)/1e6 > .2 % Test alt condition for proceeding to fragmentation
+% if par2.Z(end) > 100 && par2.pm(end)/1e6 > .5 % Original v6 soft condition
+if par2.Z(end) > Par.a * Input.zFailTol && par2.pm(end)/Par.pf > 1+Input.pFailTol % par2.pm(end)/1e6 > .2 % Test alt condition for proceeding to fragmentation (match w/ failTol)
    
     y0 = [par2.mg(end),par2.M0(end),par2.M1(end),par2.M2(end),par2.M3(end),...
         par2.pm(end),par2.Z(end),par2.pg(end), par2.a(end)];
@@ -253,12 +265,12 @@ else
 end    
 output.Csol = solubility(output.pm,Par.Xc,Par.T);
 
-% Added by CR (2021) for a few additional output params
+% Added by CR (2021-2023) for additional output params
 output.Par    = Par;
 output.Par.Zf = Zf;     % Fragmentation depth
 output.Par.Zc = Zc;     % Choking depth
-output.Par.frag = frag; % Fragmentation flag
-output.Par.choke = choke; % Choking flag
+output.Outcome.frag = frag; % Fragmentation flag
+output.Outcome = ConduitOutcome(Input,output);
 % -----
 end
 
@@ -1098,7 +1110,8 @@ for i = 1:length(Pg)
     p = [Pg(i) -R*T a./sqrt(T)-Pg(i)*b^2-R*T*b -a./sqrt(T)*b];
     for j = 1:4
         if isnan(p(j)) || isinf(p(j))
-            keyboard
+            error('Check Pg, T')
+%             keyboard
         end
     end
     r = roots(p);
@@ -1190,7 +1203,7 @@ function [position,isterminal,direction] = EventsFcn3(t,y,Par)
 % Event function for after fragmentation: ODE solver stops when either of the following happens:
 % Pressure = 1 atm
 % Z = 0
-% Mach number = 0.99
+% Mach number = Crit Mach # (Default 0.97)
 
 mg = y(1);
 M3 = y(5);
@@ -1239,7 +1252,7 @@ end
 
 
 function [position,isterminal,direction] = EventsFcn4(t,y,Par)
-% Event function for after fragmentation: ODE solver stops when either of the following happens:
+% Event function for after fragmentation with flaring: ODE solver stops when either of the following happens:
 % Pressure = 1 atm
 % Z = 0
 % Mach number = 0.99

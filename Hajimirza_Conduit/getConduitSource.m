@@ -57,9 +57,12 @@ Zw      = 0;                % water depth over vent [m]
 rho_l   = 1000; % Density of liquid water (kg/m^3)
 
 % Conduit run failure thresholds to check for valid solution
-ZfailScale  = 2;   % Z (depth) threshold in conduit radii
-Mfailthresh = 0.95; % Mach number threshold
-Pfailthresh = .05;  % Over-/underpressure threshold
+zFailTol  = 0.2;   % Z (depth) threshold in units of conduit radii: Zf/a < ZfailTol
+mFailTol = 0.05; % Mach number tolerance for choking: abs(1-M) < MfailTol
+pFailTol = .005;  % Over-/underpressure threshold: (1 - Pm/Pf) < PfailTol
+
+% Not conditional for valid solutions, but provides outcome interpretation
+flareTol = .005; % Vent radius ratio tolerance to be considered flaring: abs(a/a_0 - 1) < flareTol
 
 %% Parse input
 
@@ -91,9 +94,10 @@ Pfailthresh = .05;  % Over-/underpressure threshold
    
     % Params for checking valid conduit solution after model run
     addParameter(p,'proxy',false)
-    addParameter(p,'ZfailScale',ZfailScale)
-    addParameter(p,'Mfailthresh',Mfailthresh)
-    addParameter(p,'Pfailthresh',Pfailthresh)
+    addParameter(p,'zFailTol',zFailTol)
+    addParameter(p,'mFailTol',mFailTol)
+    addParameter(p,'pFailTol',pFailTol)
+    addParameter(p,'flareTol',flareTol)
     
     parse(p,varargin{:})
     conSource = p.Results;
