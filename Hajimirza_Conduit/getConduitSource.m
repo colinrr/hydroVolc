@@ -57,9 +57,9 @@ Zw      = 0;                % water depth over vent [m]
 rho_l   = 1000; % Density of liquid water (kg/m^3)
 
 % Conduit run failure thresholds to check for valid solution
-zFailTol  = 0.2;   % Z (depth) threshold in units of conduit radii: Zf/a < ZfailTol
+zFailTol = 2;    % Z (depth) threshold in units of conduit radii: Zf/a < ZfailTol
 mFailTol = 0.05; % Mach number tolerance for choking: abs(1-M) < MfailTol
-pFailTol = .005;  % Over-/underpressure threshold: (1 - Pm/Pf) < PfailTol
+pFailTol = .005; % Over-/underpressure threshold: (1 - Pm/Pf) < PfailTol
 
 % Not conditional for valid solutions, but provides outcome interpretation
 flareTol = .005; % Vent radius ratio tolerance to be considered flaring: abs(a/a_0 - 1) < flareTol

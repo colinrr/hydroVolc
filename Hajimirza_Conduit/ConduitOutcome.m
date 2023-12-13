@@ -1,7 +1,9 @@
 classdef (ConstructOnLoad = true) ConduitOutcome
 %   ConduitOutcome
-%   ConduitOutcome(code)  Code = integer
-%   ConduitOutcome(name)  Name = string
+%   ConduitOutcome(code)  : Code = integer
+%   ConduitOutcome(name)  : Name = string
+%   ConduitOutcome(cI,cO) : cI, cO are I/O structs from Conduit model
+%   ConduitOutcome(ME)    : ME is MatlabException from failed model run
 %
 %   Produces and object containing code ID and explanatory strings for 
 %   outcome of a conduit model run. 
@@ -17,6 +19,7 @@ classdef (ConstructOnLoad = true) ConduitOutcome
         ZFailTol
         MFailTol
         PFailTol
+        Failed                      = false;
         DepthFlag logical           = false;
         NotUnderPressured logical   = false;
         PressureBalanced logical    = false;
@@ -33,35 +36,10 @@ classdef (ConstructOnLoad = true) ConduitOutcome
             
             getFromCode = false;
             getFromName = true;
-            getTols     = true;
-            Tols = [];
+%             getTols     = true;
+%             Tols = [];
             
-%             if nargin >=1
-%                 if isnumeric(varargin{1})
-%                     obj.Code = varargin{1};  
-%                     getFromCode = true;
-%                     
-%                 elseif isstring(varargin{1})
-%                     obj.Name = varargin{1};
-%                     getFromName =true;
-%                     
-%                 elseif isstruct(varargin{1})
-%                     Tols = varargin{1};
-%                     getTols = false;
-%                     
-%                 else
-%                     error("Input type in position 1 not recognized. Must be scalar, string, or struct.")
-%                     
-%                 end
-%             end
-            
-%             if nargin == 2 && isstruct(varargin{2})
-%                 Tols = varargin{2};
-%                 getTols = false;
-%                 
-%             elseif getTols % Assume default thresholds
-%                 Tols = getDefaultTolerances;
-%             end
+
             if nargin>=3
                 assert(islogical(varargin{3}),'Third argument is verbose: true/false.')
                 verbose = varargin{3};
@@ -73,7 +51,24 @@ classdef (ConstructOnLoad = true) ConduitOutcome
                 obj = ConduitOutcome.getDefaultTolerances(obj);
             end
             
-            if nargin >= 2
+            if nargin==1
+                if isa(varargin{1},'MException')
+                    obj = errorOutcome(obj,varargin{1});
+                
+                elseif isnumeric(varargin{1}) && isscalar(varargin{1})
+                    obj.Code = varargin{1};
+%                     getFromCode = true;
+                    referenceTable = ConduitOutcome.getTable(obj);
+                    obj = getRowByCode(obj,referenceTable);
+                    
+                elseif ischar(varargin{1}) || isstring(varargin{1})
+                    obj.Name = varargin{1};
+                    referenceTable = ConduitOutcome.getTable(obj);
+                    obj = getRowByName(obj,referenceTable);
+                    
+                end
+            
+            elseif nargin >= 2
                 cI = varargin{1}; cO = varargin{2}; % These can be classes eventually
                 assert(all([isstruct(cI) isstruct(cO) isfield(cI,'conduit_radius') isfield(cO,'rho_magma')]),...
                     'Two arguments must be input and output structs of conduit model.')
@@ -95,6 +90,30 @@ classdef (ConstructOnLoad = true) ConduitOutcome
             
         end
         
+        function obj = errorOutcome(obj,ME)
+            knownIdentifiers = {'physicalBoundsError','IntegrationTolNotMet'};
+            referenceTable = ConduitOutcome.getTable(obj);
+
+            if contains(ME.identifier, knownIdentifiers)
+                switch ME.identifier
+                    case 'MATLAB:ode15s:IntegrationTolNotMet'
+                        obj.Name   = 'failedIntegration';
+                    case {'findPb:physicalBoundsError','after_fragmentation:physicalBoundsError'}
+                        obj.Name   = 'failedPhysics';
+                end
+                
+            else
+                obj.Name   = 'failedUnmappedError';
+            end
+
+            obj = getRowByName(obj,referenceTable);
+            obj.Label  = ME.identifier;
+            obj.Msg    = ME.message;
+            obj.Exception = ME;
+            obj = obj.getDefaultTolerances(obj);
+            obj.Failed = true;
+        end
+        
         function obj = getRowByCode(obj, T)
             assert(ismember(obj.Code,T.Code),'Conduit: Outcome Code not recognized.')
             [~,idx] = ismember(obj.Code,T.Code);
@@ -111,6 +130,16 @@ classdef (ConstructOnLoad = true) ConduitOutcome
             obj.Code = T{obj.Name,'Code'};
             obj.Label = T{obj.Name,'Label'};
             obj.Msg  = T{obj.Name, 'Message'};
+        end
+        
+        function repString = reportString(obj) %, cI)
+%             if isempty(cI)
+                repString = sprintf('%s: Z ~ 0: %i, Frag: %i, UnderP.: %i, P bal.: %i, Mach#: %i, Flare: %i, Valid: %i',...
+                    obj.Label,obj.DepthFlag,obj.Frag,obj.NotUnderPressured,obj.PressureBalanced,obj.Choked,obj.Flared,obj.Valid);
+%             else
+%                 repString = sprintf('%%s: Z ~ 0: %i, Frag: %i, UnderP.: %i, P bal.: %i, Mach#: %i, Flare: %i, Valid: %i\n',...
+%                     obj.Label,obj.DepthFlag,obj.Frag,obj.NotUnderPressured,obj.PressureBalanced,obj.Choked,obj.Flared,obj.Valid);
+%             end
         end
         
     end
@@ -263,23 +292,23 @@ classdef (ConstructOnLoad = true) ConduitOutcome
                 elseif ~obj.PressureBalanced && obj.Choked && ~obj.Flared % Overpressured, choked
                     name = "validExplosiveChoked";
 
-                elseif ~obj.PressureBalanced && obj.Choke && obj.Flared % Overpressured, choked, flared
+                elseif ~obj.PressureBalanced && obj.Choked && obj.Flared % Overpressured, choked, flared
                     name = "validExplosiveFlaring";
                 else
                     name = "unmappedValidExplosive";
                 end
 
             elseif obj.Frag && ~obj.Valid % Invalid explosive
-                if ~obj.DepthFlag && obj.PressBalance % Did not reach surface, pressure balanced
+                if ~obj.DepthFlag && obj.PressureBalanced % Did not reach surface, pressure balanced
                     name = "invalidFragStalled";
 
-                elseif ~obj.DepthFlag && obj.Choke && ~obj.Flare % Did not reach surface, M~1 limit reached immediately and without flaring (probably overpressure)
+                elseif ~obj.DepthFlag && obj.Choked && ~obj.Flared % Did not reach surface, M~1 limit reached immediately and without flaring (probably overpressure)
                     name = "invalidFragChoked";
 
-                elseif ~obj.DepthFlag && obj.Choke && obj.Flare % Choked and flaring, M~1 limit reached (probably overpressure)
+                elseif ~obj.DepthFlag && obj.Choked && obj.Flared % Choked and flaring, M~1 limit reached (probably overpressure)
                     name = "invalidFragFlaring";
 
-                elseif obj.DepthFlag && ~obj.Choke && ~obj.PressureBalanced % Reached surface, overpressured but did not reach M~1
+                elseif obj.DepthFlag && ~obj.Choked && ~obj.PressureBalanced % Reached surface, overpressured but did not reach M~1
                     name = "invalidFragNoChoke";
                 else
                     name = "unmappedInvalidExplosive";
@@ -318,12 +347,15 @@ classdef (ConstructOnLoad = true) ConduitOutcome
                 "invalidFragNoChoke"
                 "unmappedValidEffusive"
                 "unmappedValidExplosive"
-                "unamppedInvalidEffusive"
+                "unmappedInvalidEffusive"
                 "unmappedInvalidExplosive"
+                "failedIntegration"
+                "failedPhysics"
                 "failedUnmappedError"
                 ];
 
-            codes = [0 1:5, -1:-1:-6, 21, 22, -21, -22, -99]';
+%             codes = [0 1:5, -1:-1:-6, 21, 22, -21, -22, -99]';
+            codes = [0 1:5, -1:-1:-6, 11, 12, -11, -12, -20, -21, -22]';
 
 
             label = ["Code 0 - no result"
@@ -342,6 +374,8 @@ classdef (ConstructOnLoad = true) ConduitOutcome
                 "UNMAPPED - valid explosive"
                 "UNMAPPED - invalid effusive"
                 "UNMAPPED - invalid explosive"
+                "FAILED, INTEGRATION TOLERANCE"
+                "FAILED, PHYSICS ERROR"
                 "FAILED, UNMAPPED ERROR"];
 
             msgs = { 'Code 0 - no result'
@@ -360,6 +394,8 @@ classdef (ConstructOnLoad = true) ConduitOutcome
                 'Valid, fragmenting conduit outcome - not previously identified - see ConduitOutcome.printTable.'
                 'Invalid, unfragmented conduit outcome - not previously identified - see ConduitOutcome.printTable.'
                 'Invalid, fragmenting conduit outcome - not previously identified - see ConduitOutcome.printTable.'
+                'Simulation failed to meet integration tolerances.'
+                'Simulation failed with known physics exception.'
                 'Simulation failed with unmapped exception.'
                 };
 
@@ -380,6 +416,17 @@ classdef (ConstructOnLoad = true) ConduitOutcome
             obj.ZFailTol = cI.zFailTol;
             obj.PFailTol = cI.pFailTol;
             obj.MFailTol = cI.mFailTol;
+        end
+        
+        function cO = getErrorOutcomeFields
+            % Populate NaN's in key fields to enable outcome plotting
+            cO.Z        = NaN;
+            cO.pm       = NaN;
+            cO.M        = NaN;
+            cO.porosity = NaN;
+            cO.a        = NaN;
+            cO.Par.pf   = NaN;
+            cO.Par.phi_frag = NaN;
         end
     end
 end

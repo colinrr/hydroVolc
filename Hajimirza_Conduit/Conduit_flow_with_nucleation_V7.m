@@ -180,7 +180,16 @@ y0 = [mg,M0,M1,M2,M3,pm,z]';     % Initial conditions
 options=odeset('AbsTol',[1e-38,1e-3,1e-12,1e-20,1e-28,1e-4,1e-5],...
                'RelTol',1e-5,...
                'Events',@EventsFcn2);
-[t2,y2] = ode15s(@before_fragmentation,[te1 1e10],y0,options,Par);
+           
+s = prepIntegrationFailure;
+try
+    [t2,y2] = ode15s(@before_fragmentation,[te1 1e10],y0,options,Par);
+catch ME
+    output = parseIntegrationFailure(ME,s);
+    warning('before_fragmentation: Integration tolerance failure taken as error.')
+    return
+end
+parseIntegrationFailure([],s);
 [~,par2] = before_fragmentation(t2,y2',Par);
 
 %==========================================================================
@@ -194,6 +203,7 @@ if par2.Z(end) > Par.a * Input.zFailTol && par2.pm(end)/Par.pf > 1+Input.pFailTo
     options=odeset('AbsTol',[1e-25,1e-3,1e-12,1e-20,1e-28,1e-2,1e-5,1e-2, 1e-2],...
                'RelTol',1e-5,...
                'Events',@EventsFcn3);
+           
     [t3,y3] = ode15s(@after_fragmentation,[par2.t(end) 1e10],y0,options,Par);
     [~,par3] = after_fragmentation(t3,y3',Par);
     
@@ -579,6 +589,10 @@ K_magma = 1./((porosity_in./Kg_in) +...
     (1-porosity_in-porosity_out) ./ Par.K_melt);
 C = (K_magma ./ out.rho_magma).^(1/2);
 % C = max((K_magma ./ out.rho_magma).^(1/2), (Kg_out ./ rho_out).^(1/2));
+
+if any(porosity_out < 0) && any(K_magma < 0) % Introducing some odd error handling here.
+    error('after_fragmentation:physicalBoundsError','Negative free gas porosity accumulation caused unphysical bulk modulus.')
+end
 
 out.C = C;
 %---------------
@@ -1035,15 +1049,18 @@ pb = zeros(size(pm));
 
 for i = 1:length(pm)
     Vw = Molecular_VH2O(pm(i),T);
-const = exp(Vw/KB/T*(pm(i)-psat(i)))...
-    .* fw_interpolant(psat(i));
+    const = exp(Vw/KB/T*(pm(i)-psat(i)))...
+        .* fw_interpolant(psat(i));
 
-p1 = pm(i);
-p2 = psat(i);
+    p1 = pm(i);
+    p2 = psat(i);
 
-fun =  @(x) abs(fw_interpolant(x) - const); 
-pb(i) = fminbnd(fun,p1,p2,optimset('TolX',1e-1)); 
-
+    fun =  @(x) abs(fw_interpolant(x) - const);
+    if p2 < p1
+        error('findPb:physicalBoundsError','findPb cannot find bubble nucleus pressure: Magma pressure is greater than volatile saturation pressure')
+    else
+        pb(i) = fminbnd(fun,p1,p2,optimset('TolX',1e-1));
+    end
 
 end
 
@@ -1239,6 +1256,10 @@ K_magma = 1./((porosity_in./Kg_in) +...
     (1-porosity_in-porosity_out) ./ Par.K_melt);
 % C = max((K_magma ./ rho_magma).^(1/2), (Kg_out ./ rho_out).^(1/2));
 
+% if porosity_out < 0 && K_magma < 0 % Introducing some odd error handling here.
+%     error('Negative porosity accumulation caused unphysical bulk modulus.')
+% end
+
 C = (K_magma ./ rho_magma).^(1/2);
 
 
@@ -1303,6 +1324,37 @@ isterminal = [1 1 1];  % Halt integration
 direction = [-1 -1 -1]; % The zero is approached from up to down
 end
 
+function s = prepIntegrationFailure
+    % Sets integrated failure from warning to error to better handle this
+    % case internally.
+    s = warning('error','MATLAB:ode15s:IntegrationTolNotMet');
+end
+
+function output = parseIntegrationFailure(ME,s)
+    % Error handling for case of integration failure.
+    
+    if nargin<1
+        ME = [];
+    end
+    
+    if ~isempty(ME)
+        output = ConduitOutcome.getErrorOutcomeFields;
+        output.Outcome = ConduitOutcome(ME);
+
+%         switch ME.identifier
+%             case 'MATLAB:ode15s:IntegrationTolNotMet'
+%                 % Return failed output
+%                 
+%             otherwise
+% 
+%         end
+    end
+    
+    if nargin > 1
+        warning(s)
+    end
+    
+end
 
 
 

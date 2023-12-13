@@ -48,17 +48,28 @@ function varargout = plotConduitOutput(D,cols)
 
     
     if all(isfield(D,{'cI','cO'}))
+        Dfail = zeros(size(D));
+        for ii=1:numel(D)
+            Dfail(ii) = isempty(D(ii).cO) || D(ii).cO.Outcome.Failed;
+        end
+        D1 = find(~Dfail,1,'last');
+        if any(Dfail)
+            warning(sprintf('%i failed conduit result(s) will not be plotted.',sum(Dfail)))
+        end
         
-        
-        if length(D)>1
-            [axC,lh(length(D))] = Conduit_flow_plot(D(end).cI,D(end).cO,cols(end,:));
-            for ii=length(D):-1:1
-                lh(ii) = Conduit_plot_2(D(ii).cI,D(ii).cO,axC,cols(ii,:));
+        if numel(D)>1
+            
+            [axC,lh(length(D))] = Conduit_flow_plot(D(D1).cI,D(D1).cO,cols(end,:));
+            for ii = (D1-1):-1:1
+                if ~Dfail(ii)
+                    lh(ii) = Conduit_plot_2(D(ii).cI,D(ii).cO,axC,cols(ii,:));
+                end
                 
             end
-        else
+        elseif ~Dfail
             [axC,lh] = Conduit_flow_plot(D.cI,D.cO,cols(1,:));
         end
+        
     end
     
     ylim(axC,[0 zm/1e3])

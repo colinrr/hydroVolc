@@ -98,6 +98,7 @@ Flvec = Zvec;
 % UPpass = false(Nruns,1);
 % PBpass = false(Nruns,1);
 
+failed             = false(Nruns,1);
 z_and_not_up       = false(Nruns,1);
 balance_or_choke   = false(Nruns,1);
 frag                = false(Nruns,1);
@@ -114,7 +115,11 @@ for nn = 1:Nruns
     if use_x_var
         xvals(nn) = dat(nn).cI.(xvar);
     end
-    Outcome = dat(nn).cO.Outcome;
+    try
+        Outcome = dat(nn).cO.Outcome;
+    catch ME
+        pause(0.5)
+    end
     
     zThresh(nn) = Outcome.ZFailTol; %.*dat(nn).cI.conduit_radius;
 %     Pthresh(nn,:) = [1-dat(nn).cI.pFailTol-(dat(nn).cO.U(end).^2*dat(nn).cO.rho_magma(end)/2)/dat(nn).cO.Par.pf 1+dat(nn).cI.pFailTol]; %./dat(nn).cI.pFailthresh;
@@ -122,6 +127,7 @@ for nn = 1:Nruns
     mThresh(nn,:)   = 1+Outcome.MFailTol.*[-1 1]; % or just 1
 %     [Zpass,UPpass,choke(nn),PressBalPass,frag(nn),flare(nn),valid(nn),~] 
 %     outcome     = checkConduitTolerances(dat(nn).cI,dat(nn).cO);
+    failed(nn)  = Outcome.Failed;
     choke(nn)   = Outcome.Choked;
     frag(nn)    = Outcome.Frag;
     flare(nn)   = Outcome.Flared;
@@ -165,6 +171,7 @@ fscb = 11;
 [~,colorval] = ismember(outcomeCode,sort(ConduitOutcome.getTable.Code));
 
 checkmap = [0 0 0; 0 0.6 1];
+validmap = [0.3 0 0; checkmap];
 
 
 th(1) = plot(ax(za),xvals,zThresh,lstyle,'Color',col,'Linewidth',lw);
@@ -182,7 +189,9 @@ h(4)  = scatter(ax(pha),xvals,PHvec,msz,colorval,'filled','MarkerEdgeColor',col,
 h(5)  = scatter(ax(fla),xvals,Flvec,msz,colorval,'filled','MarkerEdgeColor',col,'LineWidth',lw);
 
 % xl = xlim(ax(va));
-h(6) = imagesc(ax(va),xvals,1:2,[balance_or_choke z_and_not_up]');
+validIm = double([balance_or_choke z_and_not_up])';
+validIm(:,failed) = -1;
+h(6) = imagesc(ax(va),xvals,1:2,validIm);
 
 xl = xlim(ax(va));
 h(7) = imagesc(ax(fa),xvals,1:3,[flare frag choke]');
@@ -198,7 +207,8 @@ if use_new_axes
 %     colormap(ax(pha),failmap)
 
     for aa=[za pa ma pha fla]; caxis(ax(aa),cax); colormap(ax(aa),failmap); end
-    colormap(ax(va),checkmap)
+    colormap(ax(va),validmap)
+    caxis(ax(va),[-1 1])
     colormap(ax(fa),checkmap)
     ylabs = {'$|Z_{min}|/a$', '$P_m/P_f$', '$M$', '$\phi/\phi_{frag}$', '$a_{max}/a_0$', 'Valid?', 'Flags'};
     for ai = 1:length(all_ax); ylabel(ax(all_ax(ai)),ylabs{ai},'Interpreter','latex'); end
@@ -262,14 +272,20 @@ function [cmap,cax,cticks,clabels] = outcomeColorMap
     
     
     % Divides: [fail invalidUnmapped invalid 0(null) valid validUnmapped]
-    codecut = [-90 -11 -1 1 11];
+    codecut = [-20 -10 -1 1 10];
     
+    % SETTING COLORMAPS FOR ALL OUTCOMES
     nullCol = [0.8 0.8 0.6];
-    validCols = [0 0 1; 0 0.8 0.8];
-    validUMcols = [0.0    0.9839    0.0805; 0.0    0.7993    0.3480];
-    invalidCols = [1 1 0; 1 0.7 0.4];
-    invalidUMCols = [1 0 1; 0.8 0.3 0.8];
-    failCols = [1 0 0; 0.5 0 0];
+%     validCols = [0 0 1; 0 0.8 0.8];
+%     validCols1 = [0    0.5000    0.4000; 0.5000    0.7500    0.4000];
+%     validUMcols = [0.0    0.9839    0.0805; 0.0    0.7993    0.3480];
+%     validUMcols = [0.8333    0.5208    0.3317; 1.0000    0.7812    0.4975];
+    validUMcols = [ 0.5250    0.6500    0.6500; 0.7625    0.8250    0.8250];
+%     invalidCols = [1 1 0; 1 0.7 0.4];
+%     invalidUMCols = [1 0 1; 0.8 0.3 0.8];
+    invalidUMCols = [0.8 0.8 0.8; 0.6 0.6 0.6];
+%     failCols = [1 0 0; 0.5 0 0];
+    failCols = [0 0 0; 0.05 0.05 0.05];
     
     idxValid        = and( codes > 0, codes < codecut(5));
     idxValidUM      = codes >= codecut(5);
@@ -285,9 +301,11 @@ function [cmap,cax,cticks,clabels] = outcomeColorMap
     
     
     cmap = [interpCols(validUMcols,nValidUM)
-            interpCols(validCols,nValid)
+            winter(nValid)
+%             interpCols(validCols,nValid)
             nullCol
-            interpCols(invalidCols,nInvalid)
+            flipud(plasma(nInvalid))
+%             interpCols(invalidCols,nInvalid)
             interpCols(invalidUMCols,nInvalidUM)
             interpCols(failCols,nFail)
             ];
