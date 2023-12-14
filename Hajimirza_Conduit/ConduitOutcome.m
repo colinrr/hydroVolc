@@ -135,7 +135,7 @@ classdef (ConstructOnLoad = true) ConduitOutcome
         function repString = reportString(obj) %, cI)
 %             if isempty(cI)
                 repString = sprintf('%s: Z ~ 0: %i, Frag: %i, UnderP.: %i, P bal.: %i, Mach#: %i, Flare: %i, Valid: %i',...
-                    obj.Label,obj.DepthFlag,obj.Frag,obj.NotUnderPressured,obj.PressureBalanced,obj.Choked,obj.Flared,obj.Valid);
+                    obj.Label,obj.DepthFlag,obj.Frag,obj.NotUnderPressured,obj.PressureBalanced,obj.Choked,obj.Flared);
 %             else
 %                 repString = sprintf('%%s: Z ~ 0: %i, Frag: %i, UnderP.: %i, P bal.: %i, Mach#: %i, Flare: %i, Valid: %i\n',...
 %                     obj.Label,obj.DepthFlag,obj.Frag,obj.NotUnderPressured,obj.PressureBalanced,obj.Choked,obj.Flared,obj.Valid);

@@ -49,17 +49,33 @@ if nargin<5
 %     col = col(1,:);
 end
 
+% Plots setup
+% -- With top colorbar
+% figpos = [100 100 950 1000];
+% ppads = [0.15 0.05 0.06 0.17];
+% cbpos = [0.85 0.025];
+% cbposlabel = 'southoutside';
+
+% -- With side colorbar
+figpos = [100 100 1050 900];
+ppads = [0.14 0.2 0.06 0.02];
+cbpos = [0.82 0.025];
+cbposlabel = 'eastoutside';
+dx = [];
+dy = 0.013;
+
+msz = 100;
+msym = 's';
+lw = 1.0;
+fs = 15;
+fscb = 11;
 lstyle = '--';
 
 idx1 = 0;
 if use_new_axes
-    fig = figure('position',[100 100 950 1000]);
+    fig = figure('position',figpos);
     nr = 7;
     nc = 1;
-    ppads = [0.15 0.05 0.06 0.17];
-    cbpos = [0.85 0.025];
-    dx = [];
-    dy = 0.012;
     
     clear ax
     za = 1; ax(za) = tightSubplot(nr,nc,za,dx,dy,ppads); % Z
@@ -143,11 +159,7 @@ for nn = 1:Nruns
     Flvec(nn) = max(dat(nn).cO.a)./dat(nn).cI.conduit_radius;
 end
 
-% Plots
-msz = 70;
-lw = 1.0;
-fs = 15;
-fscb = 11;
+
 
 
 
@@ -175,18 +187,18 @@ validmap = [0.3 0 0; checkmap];
 
 
 th(1) = plot(ax(za),xvals,zThresh,lstyle,'Color',col,'Linewidth',lw);
-h(1)  = scatter(ax(za),xvals,Zvec,msz,colorval,'filled','MarkerEdgeColor',col,'LineWidth',lw,'Marker','s');
+h(1)  = scatter(ax(za),xvals,Zvec,msz,colorval,'filled','MarkerEdgeColor',col,'LineWidth',lw,'Marker',msym);
 
 th(2:3) = plot(ax(pa),xvals,pThresh,lstyle,'Color',col,'Linewidth',lw);
-h(2)  = scatter(ax(pa),xvals,Pvec,msz,colorval,'filled','MarkerEdgeColor',col,'LineWidth',lw);
+h(2)  = scatter(ax(pa),xvals,Pvec,msz,colorval,'filled','MarkerEdgeColor',col,'LineWidth',lw,'Marker',msym);
 
 th(4:5) = plot(ax(ma),xvals,mThresh,lstyle,'Color',col,'Linewidth',lw);
-h(3)  = scatter(ax(ma),xvals,Mvec,msz,colorval,'filled','MarkerEdgeColor',col,'LineWidth',lw);
+h(3)  = scatter(ax(ma),xvals,Mvec,msz,colorval,'filled','MarkerEdgeColor',col,'LineWidth',lw,'Marker',msym);
 
 th(6) = plot(ax(pha),xvals,phThresh,lstyle,'Color',col,'Linewidth',lw);
-h(4)  = scatter(ax(pha),xvals,PHvec,msz,colorval,'filled','MarkerEdgeColor',col,'LineWidth',lw);
+h(4)  = scatter(ax(pha),xvals,PHvec,msz,colorval,'filled','MarkerEdgeColor',col,'LineWidth',lw,'Marker',msym);
 
-h(5)  = scatter(ax(fla),xvals,Flvec,msz,colorval,'filled','MarkerEdgeColor',col,'LineWidth',lw);
+h(5)  = scatter(ax(fla),xvals,Flvec,msz,colorval,'filled','MarkerEdgeColor',col,'LineWidth',lw,'Marker',msym);
 
 % xl = xlim(ax(va));
 validIm = double([balance_or_choke z_and_not_up])';
@@ -208,8 +220,9 @@ if use_new_axes
 
     for aa=[za pa ma pha fla]; caxis(ax(aa),cax); colormap(ax(aa),failmap); end
     colormap(ax(va),validmap)
-    caxis(ax(va),[-1 1])
+    caxis(ax(va),[-1.5 1.5])
     colormap(ax(fa),checkmap)
+    caxis(ax(fa),[-0.5 1.5])
     ylabs = {'$|Z_{min}|/a$', '$P_m/P_f$', '$M$', '$\phi/\phi_{frag}$', '$a_{max}/a_0$', 'Valid?', 'Flags'};
     for ai = 1:length(all_ax); ylabel(ax(all_ax(ai)),ylabs{ai},'Interpreter','latex'); end
     %     caxis(ax(za),[0 1])
@@ -232,20 +245,46 @@ if use_new_axes
     xlabel(ax(fa),replace(xlab,'_',' '),'Interpreter','latex')
 
     set(ax(va),'YTick',(1:2),'YTickLabel',{'or(choke, P-bal)','and(Z, ~U-P)'})
-    set(ax(fa),'YTick',(1:3),'YTickLabel',{'Flare','Frag','Choke'})
+    set(ax(fa),'YTick',(1:3),'YTickLabel',{'Flaring','Fragmented','Choked'})
     
-    grid(ax(1:4),'on')
+    grid(ax(1:5),'on')
     xlim(ax,[min(xvals)-0.5 max(xvals)+0.5])
     set(ax,'FontSize',fs)
     linkaxes(ax,'x')
     
-    axpos = get(ax(fla),'Position');
-    cb = colorbar(ax(fla),'location','southoutside');
-    cb.Position = [axpos(1) cbpos(1) axpos(3) cbpos(2)];
+    % Top colorbar
+%     axpos = get(ax(fla),'Position');
+%     cb = colorbar(ax(fla),'location',cbposlabel);
+%     cb.Position = [axpos(1) cbpos(1) axpos(3) cbpos(2)];
+%     cb.Ruler.TickLabelRotation=50;
+    
+    % Side colorbar
+    axpos1 = get(ax(za),'Position');
+    axpos2 = get(ax(fla),'Position');
+    cb = colorbar(ax(fla),'location',cbposlabel);
+    cb.Position = [cbpos(1) axpos2(2) cbpos(2) sum([axpos1([2 4]) -axpos2(2)])];
+%     cb.Ruler.TickLabelRotation=-10;
+    
     cb.Ticks = cticks;
     cb.TickLabels = cticklabels;
-    cb.Ruler.TickLabelRotation=50;
     cb.FontSize = fscb;
+    
+    % Small colorbars
+    axpos1 = get(ax(va),'Position');
+    cb = colorbar(ax(va),'location',cbposlabel);
+    cb.Position = [cbpos(1) axpos1(2) cbpos(2) axpos1(4)];
+    cb.Ticks = [-1 0 1];
+    cb.TickLabels = {'Failed','Invalid','Valid'};
+    cb.FontSize = fscb;
+    
+    axpos2 = get(ax(fa),'Position');
+    cb = colorbar(ax(fa),'location',cbposlabel);
+    cb.Position = [cbpos(1) axpos2(2) cbpos(2) axpos2(4)];
+    cb.Ticks = [0 1];
+    cb.TickLabels = {'False','True'};
+    cb.FontSize = fscb;
+
+
 else
 %     xlim(ax,[xl(1) max(xvals)+0.5])
 %     xlim(ax(va),[min(xvals)-0.5 max(vals)+0.5])
@@ -285,7 +324,7 @@ function [cmap,cax,cticks,clabels] = outcomeColorMap
 %     invalidUMCols = [1 0 1; 0.8 0.3 0.8];
     invalidUMCols = [0.8 0.8 0.8; 0.6 0.6 0.6];
 %     failCols = [1 0 0; 0.5 0 0];
-    failCols = [0 0 0; 0.05 0.05 0.05];
+    failCols = [0 0 0; 0.4 0.1 0.1];
     
     idxValid        = and( codes > 0, codes < codecut(5));
     idxValidUM      = codes >= codecut(5);

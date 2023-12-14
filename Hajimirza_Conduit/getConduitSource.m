@@ -18,6 +18,7 @@ phi_frag        = .75;          % Critical porosity for fragmentation
 N0              = 0;            % Initial bubble number density
 phi0            = 0;            % Volume fraction of initial exsolved volatiles
 
+
 conduit_radius  = 45;           % Conduit radius
 
 composition     = struct();     % Struct containing optional name value pairs of chemical 
@@ -35,11 +36,20 @@ composition     = struct();     % Struct containing optional name value pairs of
                                     
 % Stuff exported from inside the condiut model
 rho_melt    = 2400;       % Melt density [Kg/m^3]
+rho_rock    = 2400;       % Average overburden rock density
 % pf          = 1e5;        % Surface pressure - defaults to pressure from
                             % atmosphere file (based on vh0), but can be
                             % specified instead
                             
 f0          = 0.0025;     % Friction coefficient
+
+n0_excess       = 0;   % EXPERIMENTAL:
+                        %  -> give a mass fraction of excess exsolved gas 
+                        %     (relative to total DISSOLVED gas mass AT SATURATION)
+                        %  -> ** REQUIRES non-zero N0 and phi0, so these
+                        %     will be estimated internally if none are
+                        %     given or values of 0 are given.
+
 
 % Plume pressure coupling
 vh0     = 00;              % vent altitude [m a.s.l.]
@@ -85,6 +95,7 @@ flareTol = .005; % Vent radius ratio tolerance to be considered flaring: abs(a/a
     % Stuff ported out of original conduit script to allow input. Must be
     % added to Par struct internally
     addParameter(p,'rho_melt',rho_melt)
+    addParameter(p,'rho_rock',rho_rock)
     addParameter(p,'f0',f0)
     addParameter(p,'pf',[])
     

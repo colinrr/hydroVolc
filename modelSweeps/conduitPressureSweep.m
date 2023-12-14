@@ -1,7 +1,38 @@
-function dat = conduitParameterSweep(cI_all,sweepParams,outDir,descriptor) % runCoarse,runFine) % OR conduitPressureSweep?
+function dat = conduitParameterSweep(cI_all,sweepParams,fixed,outDir,descriptor,lookHarder) % runCoarse,runFine) % OR conduitPressureSweep?
 % Conduit sweep function, conduit V7
 % INPUT:
-%    cI = fixed conduit input params
+%   cI          : common input parameters for all model runs
+%   sweepParams : Parameters to sweep over as a struct.
+%                  Limit to 1-2 parameters max for now? maybe 3?.
+%                  Struct fieldnames = parameter name
+%                     substruct: .values  = [2x1]
+%                     substruct: .n       = number of tests, this dimension
+%   outDir      : Directory to save data
+%
+% OPTIONAL NAME/VALUE ARGS:
+%   fixed       : [OPTIONAL] For a given run:
+%                   'Q' = [Default] fix mass flux and search over conduit radius
+%                   'R' = fix radius and search over mass flux
+%
+%   runCoarse   : [T]/F - coarse solution search with fixed steps in R/Q
+%                  (purpose is to find or bracket initial valid solutions)
+%
+%   runFine     : T/[F] - fine search with adaptive steps in R/Q
+%                  (purpose is to get fine-tuned bounds on valid solutions)
+%                   *** REQUIRES coarseFile if runCoarse=F? Or valid
+%                   solutions input?
+%
+%   coarseFile  : path to save file for previously created output of a 
+%                 coarse search. Automatically sets runCoarse = false
+%
+%   lookHarder  : Integer. DEFAULT = NaN. If no valid solutions are found in
+%                  coarse search, refine the search and run another set 
+%                  (will slow things down). 
+%                   Typical value = 2, which means halve previous grid
+%                   spacing and look in the previously untested values.
+%                   3 = 1/3 spacing, etc.
+%
+%   descriptor  : text tag to add to save file names (so avoid spaces etc)
 %
 %
 %  ---> Shooting runs to find the range of viable conduit solutions for
@@ -16,8 +47,9 @@ function dat = conduitParameterSweep(cI_all,sweepParams,outDir,descriptor) % run
 % PROCEDURE (should write as accessible functions to refine full look-up table):
 %     (1) "runCoarse": Coarse brute force sweep with a coarse step size to find
 %           approximate bounding locations for conduit radii.
-%           --> Generate a coarse lookup table in R,MER,Pf
+%           --> Generate a coarse lookup table in (params of interest) R,MER,Pf
 %           --> CURRENTLY SAVES ALL CONDUIT OUTPUT, FILE CAN BE VERY LARGE
+%               '-> Coarse search really only needs summary data (step 2)
 %
 %     (2) "getParams": Get summary values from coarse search, sufficient to
 %           run fine search.

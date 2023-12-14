@@ -51,12 +51,13 @@ Par.AV          = 6.022e23;                     % Avogadro number [1/mol]
 Par.Rgas        = 8.314;                        % Gas constant [J/(K.mol)]
 % Par.rho_melt    = 2400;                         % Melt density [Kg/m^3]
 Par.g           = 9.81;                         % Gravity
-Par.rho_rock        = 2400;                         % Rock density
+% Par.rho_rock    = 2400;                         % Rock density
 % Par.f0          = .0025;                        % Friction coefficient (Mastin 2000)
 Par.K_melt      = 224e8;                        % Bulk Modulus of melt
 
 % --- CR 2021 input edits ---
 Par.rho_melt = Input.rho_melt;
+Par.rho_rock = Input.rho_rock;
 Par.pf       = Input.pf;
 Par.f0       = Input.f0;
 frag         = 0;
