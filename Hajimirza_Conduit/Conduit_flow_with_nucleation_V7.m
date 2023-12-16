@@ -187,7 +187,7 @@ try
     [t2,y2] = ode15s(@before_fragmentation,[te1 1e10],y0,options,Par);
 catch ME
     output = parseIntegrationFailure(ME,s);
-    warning('before_fragmentation: Integration tolerance failure taken as error.')
+%     warning('before_fragmentation: Integration tolerance failure taken as error.')
     return
 end
 parseIntegrationFailure([],s);

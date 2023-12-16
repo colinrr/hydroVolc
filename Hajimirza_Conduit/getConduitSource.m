@@ -46,9 +46,10 @@ f0          = 0.0025;     % Friction coefficient
 n0_excess       = 0;   % EXPERIMENTAL:
                         %  -> give a mass fraction of excess exsolved gas 
                         %     (relative to total DISSOLVED gas mass AT SATURATION)
-                        %  -> ** REQUIRES non-zero N0 and phi0, so these
-                        %     will be estimated internally if none are
-                        %     given or values of 0 are given.
+                        %  -> ** REQUIRES non-zero N0 and phi0:
+                        %      - N0 will be estimated internally if it is 0
+                        %      - phi0 will be OVERWRITTEN since it is calculated
+                        %      from n0_excess.
 
 
 % Plume pressure coupling
@@ -91,6 +92,7 @@ flareTol = .005; % Vent radius ratio tolerance to be considered flaring: abs(a/a
     addParameter(p,'N0',N0)
     addParameter(p,'phi0',phi0)
     addParameter(p,'composition',composition)
+    addParameter(p,'n0_excess',n0_excess)
     
     % Stuff ported out of original conduit script to allow input. Must be
     % added to Par struct internally
@@ -143,6 +145,19 @@ flareTol = .005; % Vent radius ratio tolerance to be considered flaring: abs(a/a
     if ~isempty(puf)
         warning('Unrecognized 1Dconduit Name/Value argument(s):')
         fprintf('\t%s\n',puf{:})
+    end
+    
+    if conSource.n0_excess ~= 0
+        if ~ismember('phi0',p.UsingDefaults)
+            warning('Input var "phi0" will be overwritten by n0_excess calculation.')
+        end
+        conSource.phi0 = h2oExcessMass2ReservoirPorosity(conSource.n0_excess,conSource);
+        
+        % Estimate N0 if needed - note that this method is very approximate
+        % and only tested for a very limited rhyolitic composition
+        if ismember('N0',p.UsingDefaults)
+            conSource.N0 = linearN0estimator(conSource.Q,conSource.pf);
+        end
     end
     
 end
