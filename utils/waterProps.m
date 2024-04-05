@@ -1,4 +1,5 @@
 function W = waterProps(P,T)
+% W = waterProps(P,T)
 % Returns water and steam properties for pressure P (Pa) and temperature T
 % (K). Uses IAPWS95 MATLAB code from Junglas, P. 2009
 

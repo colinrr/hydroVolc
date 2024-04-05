@@ -118,7 +118,7 @@ rho_aB0 = P_0/(R_v*theta_a_0)*(1+w_a_0)/(w_a_0+eps_0);
 
 
 
-phi_v0   = n_0*rho_s/(n_0*rho_s+(1-n_0)*rho_v0);
+% phi_v0   = n_0*rho_s/(n_0*rho_s+(1-n_0)*rho_v0);
 
 m_0      = rho_B0*u_0*r_0^2;
 v_0      = pi*u_0*r_0^2;

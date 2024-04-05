@@ -91,6 +91,7 @@ classdef (ConstructOnLoad = true) ConduitOutcome
         end
         
         function obj = errorOutcome(obj,ME)
+            % Todo: add 'EoS:physicalBoundsError','Check Pg, T in water equation of state'
             knownIdentifiers = {'physicalBoundsError','IntegrationTolNotMet'};
             referenceTable = ConduitOutcome.getTable(obj);
 
@@ -134,7 +135,7 @@ classdef (ConstructOnLoad = true) ConduitOutcome
         
         function repString = reportString(obj) %, cI)
 %             if isempty(cI)
-                repString = sprintf('%s: Z ~ 0: %i, Frag: %i, UnderP.: %i, P bal.: %i, Mach#: %i, Flare: %i, Valid: %i',...
+                repString = sprintf('%s: Z ~ 0: %i, Frag: %i, UnderP.: %i, P bal.: %i, Mach#: %i, Flare: %i',...
                     obj.Label,obj.DepthFlag,obj.Frag,obj.NotUnderPressured,obj.PressureBalanced,obj.Choked,obj.Flared);
 %             else
 %                 repString = sprintf('%%s: Z ~ 0: %i, Frag: %i, UnderP.: %i, P bal.: %i, Mach#: %i, Flare: %i, Valid: %i\n',...

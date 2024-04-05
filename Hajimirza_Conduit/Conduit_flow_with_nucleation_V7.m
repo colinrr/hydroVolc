@@ -143,7 +143,7 @@ if M0 < Par.ND
     z = par1.Z(end);
 
 else
-    
+    assert(Input.phi0>0,'Cannot have zero initial porosity and non-zero BND.')
     % Preparing initial conditions for bubble nucleation and growth
     % function
     M0 = Input.N0;   
@@ -1128,7 +1128,7 @@ for i = 1:length(Pg)
     p = [Pg(i) -R*T a./sqrt(T)-Pg(i)*b^2-R*T*b -a./sqrt(T)*b];
     for j = 1:4
         if isnan(p(j)) || isinf(p(j))
-            error('Check Pg, T')
+            error('EoS:physicalBoundsError','Check Pg, T in water equation of state')
 %             keyboard
         end
     end

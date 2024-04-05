@@ -1,8 +1,24 @@
 function aP = getAtmoProps(atmo,z)
     % z = m a.s.l. vector
     % atmo = amto profile
-
-
+    
+    if(ischar(atmo))
+        load(atmo)
+        clear atmo
+        if or(istable(atmprofile),isstruct(atmprofile))
+            atmo.z  = atmprofile.Altitude;
+            atmo.P  = atmprofile.Pressure;
+            atmo.T  = atmprofile.Temperature;
+            atmo.rh = atmprofile.relativeHumidity/100;
+        end
+    elseif ismatrix(atmo) && size(atmo,2)==5
+        A = atmo; clear atmo
+        atmo.z = A(:,2);
+        atmo.P = A(:,1);
+        atmo.T = A(:,3);
+        atmo.rh = A(:,5)/100;
+    end
+    
     R_d        = 287;   % gas constant of dry air (J/kg/K) 
     R_v        = 461;   % gas constant of volcanic gas (water) (J/kg/K) 
     eps        = R_d/R_v;
@@ -27,7 +43,12 @@ function aP = getAtmoProps(atmo,z)
     aP.dpdz   = gradient(aP.P,z);
     aP.drhodz = gradient(aP.rho_aB,z);
     
+    % Calculate Dew-point Temperature
+    qz      =   aP.rh .* 0.622 .* aP.es_0 ./ (aP.P - aP.es_0);
+    chi     = log(aP.P./100 .* qz ./ (6.112.*(0.622+qz)));
+    aP.Tdew = 243.5 .* chi ./ (17.67-chi);
+    
     % Local Brunt-Vaisalla
-    N = (-g./aP.rho_aB .* aP.drhodz).^(1/2); % uses a local reference density?
+%     N = (-g./aP.rho_aB .* aP.drhodz).^(1/2); % uses a local reference density?
     
 end

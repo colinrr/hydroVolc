@@ -147,6 +147,7 @@ flareTol = .005; % Vent radius ratio tolerance to be considered flaring: abs(a/a
         fprintf('\t%s\n',puf{:})
     end
     
+    % Run some checks
     if conSource.n0_excess ~= 0
         if ~ismember('phi0',p.UsingDefaults)
             warning('Input var "phi0" will be overwritten by n0_excess calculation.')
@@ -158,6 +159,11 @@ flareTol = .005; % Vent radius ratio tolerance to be considered flaring: abs(a/a
         if ismember('N0',p.UsingDefaults)
             conSource.N0 = linearN0estimator(conSource.Q,conSource.pf);
         end
+    end
+    
+    if conSource.phi0==0 && conSource.N0~=0
+        warning('Cannnot have non-zero Bubble Number Density with zero initial porosity. BND set to 0.')
+        conSource.N0 = 0;
     end
     
 end
