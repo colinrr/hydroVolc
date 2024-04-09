@@ -120,13 +120,13 @@ maxIter = 10;      % Max iterations to narrow search
             
             % Reset Rbounds here based on new info...
             % ...Found downwards
-            if searchScale(searchIndexOrder(iter)) > searchScale(searchIndexOrder(1))
+            if searchScale(searchIndexOrder(iter-1)) > searchScale(searchIndexOrder(1))
                 % Alternating search direction means 2 steps ago was last fail
-                Rbounds = [searchScale(searchIndexOrder(iter-2)) max(Rbounds)];
+                Rbounds = [searchScale(searchIndexOrder(iter-3)) max(Rbounds)];
                 
             % ...Found upwards
-            elseif searchScale(searchIndexOrder(iter)) < searchScale(searchIndexOrder(1))
-                Rbounds = [min(Rbounds) searchScale(searchIndexOrder(iter-2)) ];
+            elseif searchScale(searchIndexOrder(iter-1)) < searchScale(searchIndexOrder(1))
+                Rbounds = [min(Rbounds) searchScale(searchIndexOrder(iter-3)) ];
             
             % ... first guess - don't revise Rbounds in this case
 %             elseif searchScale(searchIndexOrder(iter)) == searchScale(searchIndexOrder(1))

@@ -10,7 +10,9 @@ function [dat,varMin,varMax,outcomeCodes] = conduitParameterSweep(cI_common,swee
 %   outDir      : Directory to save data. Will not save to disc if empty.
 %
 % OPTIONAL NAME/VALUE ARGS:
-%   cores       : number of cores to run
+%   cores       : number of cores to run. Using >1 core will force 
+%                 verbose = false within the conduit search function to
+%                 avoid output chaos.
 %   searchVar   : [OPTIONAL] For a given run:
 %                   'R' = [Default] search over conduit radius, fixing mass flux
 %                   'Q' = search over mass flux, fixing conduit radius
@@ -137,7 +139,7 @@ disp('  Setting up conduit model sweep...')
     allCodes        = cell(sweepDims);
    
     if ~isempty(runPars.descriptor)
-        rtitle = ['Conduit sweep: ' runPars.descriptor];
+        rtitle = ['Conduit sweep: ' strrep(runPars.descriptor,'_',' ')];
     else
         rtitle = ['Conduit sweep'];
     end
@@ -148,14 +150,14 @@ disp('  Setting up conduit model sweep...')
         parpool(runPars.cores);
         q = parallel.pool.DataQueue;
         afterEach(q, @nUpdateWaitbar);
-        p = 1;
+        prog = 0;
     else
         multithread = false;
     end
     
     disp('Running sweep...')
     startTime = tic;
-    h = waitbar(0, rtitle);
+    h = waitbar(0, sprintf('%i / %i',prog,nRuns), 'Name', rtitle);
    
 %     if ~runPars.verbose; textprogressbar('  Sweep: ');end
     if multithread
@@ -165,7 +167,15 @@ disp('  Setting up conduit model sweep...')
             tic
             % TODO: input optional to limit Rbounds or add Rvalid, other
             %       params for conduitRadiusFromQ
-            [Rlims,dat(ii).cO,dat(ii).cO,validCodes,allCodes{ii}] = conduitRadiusFromQ(dat(ii).cI,[],'verbose',runPars.verbose,'output',true);
+            try
+                [Rlims,dat(ii).cI,dat(ii).cO,validCodes,allCodes{ii}] = conduitRadiusFromQ(dat(ii).cI,[],'verbose',false,'output',true);
+            catch ME
+                dat(ii).cO = ConduitOutcome.getErrorOutcomeFields;
+                dat(ii).cO.Outcome = ConduitOutcome(ME);
+                Rlims = [NaN NaN];
+                validCodes = [NaN NaN];
+                allCodes{ii} = dat(ii).cO.Outcome.Code;
+            end
             varMin(ii) = Rlims(1);
             varMax(ii) = Rlims(2);
             varMinCodes(ii) = validCodes(1);
@@ -204,7 +214,15 @@ disp('  Setting up conduit model sweep...')
         for ii=1:nRuns
 
             tic
-            [Rlims,dat(ii).cO,dat(ii).cO,validCodes,allCodes{ii}] = conduitRadiusFromQ(dat(ii).cI,[],'verbose',runPars.verbose,'output',true);
+            try
+                [Rlims,dat(ii).cI,dat(ii).cO,validCodes,allCodes{ii}] = conduitRadiusFromQ(dat(ii).cI,[],'verbose',runPars.verbose,'output',true);
+            catch ME
+                dat(ii).cO = ConduitOutcome.getErrorOutcomeFields;
+                dat(ii).cO.Outcome = ConduitOutcome(ME);
+                Rlims = [NaN NaN];
+                validCodes = [NaN NaN];
+                allCodes{ii} = dat(ii).cO.Outcome.Code;
+            end
             varMin(ii) = Rlims(1);
             varMax(ii) = Rlims(2);
             varMinCodes(ii) = validCodes(1);
@@ -216,8 +234,7 @@ disp('  Setting up conduit model sweep...')
                 failMsg(ii).runi = ii;
                 failMsg(ii).ME = dat(ii).cO.Outcome.Exception;
             end
-            waitbar(ii/nRuns,h)
-%             textprogressbar(ii/nRuns*100)
+            waitbar(ii/nRuns, h, sprintf('%i / %i',ii,nRuns));
         end
     end
     close(h)
@@ -250,8 +267,9 @@ disp('  Setting up conduit model sweep...')
     disp('')
     
     function nUpdateWaitbar(~)
-        waitbar(p/nRuns, h);
-        p = p + 1;
+        prog = prog + 1;
+        waitbar(prog/nRuns, h, sprintf('%i / %i',prog,nRuns));
+%         p = p + 1;
     end
 end
 
