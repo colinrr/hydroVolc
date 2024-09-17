@@ -12,7 +12,7 @@ function varargout = hmodel(pI,verbose)
 % --> GSD implementation based on Girault ea 2014, Colucci ea 2014, CR Mar 2021
 
 if nargin<2
-    verbose = false;
+    verbose = true;
 end
 
 
@@ -274,7 +274,7 @@ if verbose
         Pout.atmo.theta_a = interp1([Meteo_Height;50000-vent_height;85000-vent_height],[Meteo_Temperature;273;173],real(z),'pchip','extrap');
     end
 
-    
+    % TODO: output atmospheric pressure, plume saturation props, etc
     Pout.atmo.es    = es;
     Pout.atmo.w_s   = w_s;
     Pout.atmo.w_a   = w_a;

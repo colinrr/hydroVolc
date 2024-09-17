@@ -146,4 +146,4 @@ if which_scenario==3
     plotAtmoProfile(cI2.atmo,aax);
 end
 
-plotPlumePair_pap([dat1 dat2]); % not optimized for different atmospheres so watch out for the tropopause location
+plotPlumePairMS([dat1 dat2]); % not optimized for different atmospheres so watch out for the tropopause location

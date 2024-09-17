@@ -1,12 +1,14 @@
 function [summ,randPars,dat] = hydroVolcMC(cI0,pI0,MC,N,cores,randPars)
 %   [summ,dat] = hydroVolcMC(cI,pI,MC,n,cores)
-%   Run Monte Carlo simulations for the hydrovolc model.
+%   Run Monte Carlo simulations for the hydroVolc model 
+%   Model citation: (Rowell et al 2022, Frontiers in Earth Science)
+%
 % INPUT:
 %    cI = fixed conduit input params
 %    pI = fixed MWI/plume input params
 %    MC = struct of randomization params.
 %         Required fields: cI, pI (params to randomize for each of the
-%                                    two main input structs)
+%                                    two main input structs in the hydroVolc model)
 %         Each parameter needs 2 sub-fields: 
 %         1) MC.<"pI","cI">.<var_name>.dist : Distribution type w/ options:
 %               'uniform', 'discrete','normal','function'
@@ -44,7 +46,10 @@ function [summ,randPars,dat] = hydroVolcMC(cI0,pI0,MC,N,cores,randPars)
 %   dat      = [n x 1] struct containing full monte carlo simulation output.
 %
 %   For paralellization, current set to max 20 cores. Adjust if needed.
-%   C Rowell, Feb 2022
+%
+%   Colin Rowell
+%       V1.0, Feb 2022
+%
 
 if nargin<6
     randPars = [];

@@ -29,6 +29,11 @@ function [Rlims,cIo,cOo,validOutcomeCodes,allOutcomeCodes] = conduitRadiusFromQ(
 %   unboundedMaxIter    : Sets step size for unbounded search. 
 %                         Default is 41, ie Rbounds = 0.6:0.02:1.4;
 %
+%   output  : true/false. For true, the full simulation output is assigned
+%               to output vars 'cIo' and 'cOo', otherwise they are empty
+%
+%   verbose : true/false for more info during search
+%
 % C Rowell, May 2021
 
 dRminScale = 1e-3; % Tolerance for R search: Rtol = Ri*dRminscale

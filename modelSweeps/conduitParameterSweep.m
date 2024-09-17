@@ -153,6 +153,7 @@ disp('  Setting up conduit model sweep...')
         prog = 0;
     else
         multithread = false;
+        prog = 0;
     end
     
     disp('Running sweep...')
@@ -170,6 +171,7 @@ disp('  Setting up conduit model sweep...')
             try
                 [Rlims,dat(ii).cI,dat(ii).cO,validCodes,allCodes{ii}] = conduitRadiusFromQ(dat(ii).cI,[],'verbose',false,'output',true);
             catch ME
+                disp('da fuq')  % We shouldn't be erroring out at this point, as error catching should happen inside the search
                 dat(ii).cO = ConduitOutcome.getErrorOutcomeFields;
                 dat(ii).cO.Outcome = ConduitOutcome(ME);
                 Rlims = [NaN NaN];
