@@ -38,16 +38,9 @@ load(datfile,'dat','outcomeCodes','cI_common','runPars','sweepParams',...
 
 
 %% Get booleans of all valid, invalid, and failed results
-    modelFailed = outcomeCodes.modelFail;
 
-    nSuccess = cellfun(@(x) sum(x>0),outcomeCodes.all); % Check for more than 1 success type
-    if any(nSuccess(:) > 1)
-        warning('Multiple successful solutions found:\n\t -> %s', datfile)
-        pause  %Hold up
-    end
-    modelValid = nSuccess>0;
-    modelInvalid = and(nSuccess<=0, ~modelFailed);
-
+    [modelValid,modelInvalid,~] = checkValid(outcomeCodes);
+    
     validMinVar = varMin(modelValid);
     validMaxVar = varMax(modelValid);
 
@@ -112,14 +105,14 @@ invSimNum = find(modelInvalid);
     % Initializing arrays
     dat_new(nRuns)  = struct('cI',dat(end).cI,'cO', dat(end).cO);
     dat_new         = reshape(dat_new,sweepDims);
-    failMsg(nRuns)  = struct('msg',[],'runi',[],'sweepPars',[]);
+    failMsg(nRuns)  = struct('msg',[],'runi',[],'sweepPars',[],'ME',[]);
     failMsg         = reshape(failMsg,sweepDims);
     modelFail       = false(sweepDims);
     varMinCodes     = zeros(sweepDims);
     varMaxCodes     = zeros(sweepDims);
     allCodes        = cell(sweepDims);
     
-    parfor ii=1:2
+    parfor ii=1:nRuns
         if modelInvalid(ii)
             [Rlims,dat_new(ii).cI,dat_new(ii).cO,validCodes,allCodes{ii}] = ...
                 conduitRadiusFromQ(dat(ii).cI,[varMinEst(ii) varMaxEst(ii)],...
@@ -129,13 +122,13 @@ invSimNum = find(modelInvalid);
 %                 'verbose',false,'output',true);
 
             % Vars that need updating: dat, outcomeCodes, varMin, varMax
-            dat(ii).cI = cI;
-            dat(ii).cO = cO;
+%             dat(ii).cI = cI;
+%             dat(ii).cO = cO;
             varMin(ii) = Rlims(1);
             varMax(ii) = Rlims(2);   
             varMinCodes(ii) = validCodes(1);
             varMaxCodes(ii) = validCodes(2);
-            allCodes{ii} = aCodes;
+%             allCodes{ii} = aCodes;
             
             modelFail(ii) = dat(ii).cO.Outcome.Failed;
             if modelFail(ii)
@@ -151,6 +144,7 @@ invSimNum = find(modelInvalid);
     
     close(h)
     disp('   ...Done!')
+    fprintf(' -> ')
     toc(startTime)
     
     % Overwrite with new outcome code results
@@ -162,6 +156,10 @@ invSimNum = find(modelInvalid);
     
     dat = dat_new;
     
+    [newModelValid,newModelInvalid,~] = checkValid(outcomeCodes);
+
+    fprintf(' -> Refined search results:\n\t Invalid: %i --> %i\n\t Valid:   %i --> %i\n',...
+        sum(modelInvalid(:)),sum(newModelInvalid(:)),sum(modelValid(:)),sum(newModelValid(:)) ) 
     %% QC plot of interpolated bounds
     if qcplot
         figure
@@ -185,23 +183,28 @@ invSimNum = find(modelInvalid);
 
         % Get plottable codes
         plotCodes = getCodeSummaryArray(outcomeCodes); % Get corrected code array
-        [cmap,cax,cticks,clabels,outcomeIndex,~] = outcomeColorMap(plotCodes,simplifyCodes, false);
+        [cmap,cax,cticks,clabels,outcomeIndex,~] = outcomeColorMap(plotCodes,true, false);
 
         % Make the plot
         figure
         imagesc(x,y, outcomeIndex )
         colormap(gca,cmap)
-        set(gca,'YDir','normal','FontSize',fs)
+        set(gca,'YDir','normal')
         caxis(cax)
         xlabel(fn{1})
         ylabel(fn{2})
+        ctlcb = colorbar(gca,'location','eastoutside');
+        caxis(cax);
+        ctlcb.Ticks = cticks;
+        ctlcb.TickLabels = clabels;
+
     end
 
 %% Writing output
 if ~isempty(outDir)
     [iDir, fname, ext] = fileparts(datfile);
-    fprintf('Output new file to: \n\t %s',[fullfile(outDir,fname) ,ext])
-    % save(fullfile(outDir,fname),'cI_common','dat','sweepParams','runPars','varMin','varMax','outcomeCodes')
+    fprintf(' -> Saving refined output file to: \n\t %s\n',[fullfile(outDir,fname) ,ext])
+    save(fullfile(outDir,fname),'cI_common','dat','sweepParams','runPars','varMin','varMax','outcomeCodes')
 
 end
 
@@ -211,4 +214,18 @@ end
         waitbar(prog/nRuns, h, sprintf('%i / %i',prog,nRuns));
 %         p = p + 1;
     end
+end
+
+function [modelValid,modelInvalid,modelFailed] = checkValid(outcomeCodes)
+% Check sweep outcomeCodes struct to get boolean arrays of valid and
+% invalid conduit runs.
+    modelFailed = outcomeCodes.modelFail;
+
+    nSuccess = cellfun(@(x) sum(x>0),outcomeCodes.all); % Check for more than 1 success type
+    if any(nSuccess(:) > 1)
+        warning('Multiple successful solutions found:\n\t -> %s', datfile)
+        pause  %Hold up
+    end
+    modelValid = nSuccess>0;
+    modelInvalid = and(nSuccess<=0, ~modelFailed);
 end
