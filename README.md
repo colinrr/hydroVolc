@@ -1,8 +1,6 @@
 # hydroVolc v1.1
 Repository for matlab glacio/hydrovolcanism 1D coupled model
 
-THIS MODEL HAS NOT BEEN APPROVED FOR PUBLIC DISTRIBUTION BY ALL AUTHORS. PLEASE DO NOT DISTRIBUTE WITHOUT CONSENT.
-
 This repository contains code for the coupled model originally published as
 "Rowell, Colin R., A. Mark Jellinek, Sahand Hajimirza, and Thomas J. Aubry. “External Surface Water Influence on Explosive Eruption Dynamics, With Implications for Stratospheric Sulfur Delivery and Volcano-Climate Feedback.” Frontiers in Earth Science 10 (2022). https://www.frontiersin.org/article/10.3389/feart.2022.788294. "
 
